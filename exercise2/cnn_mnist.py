@@ -130,7 +130,7 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
                 train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.5})
                     
                     #print("step %d, training accuracy %g"%(i, train_accuracy))
-            train_accuracy = accuracy.eval(feed_dict={x_image:x_train, y_: y_train, keep_prob: 1.0})
+            train_accuracy = accuracy.eval(feed_dict={x_image:x_batch, y_: y_batch, keep_prob: 1.0})
             learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0})
             print("step %d, training accuracy %g"%(i, train_accuracy))
             """print("test accuracy %g"%accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0}))  """    

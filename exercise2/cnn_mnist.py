@@ -140,7 +140,7 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
         saver = tf.train.Saver()
         sess.run(tf.global_variables_initializer())
         
-        model = saver.save(sess, './models/model' + count + '.ckpt')
+        model = saver.save(sess, './models/model' + str(count) + '.ckpt')
         count += 1
         print("path of model: %s \n\n\n " % model )
 

@@ -147,13 +147,14 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     return learning_curve, model  # TODO: Return the validation error after each epoch (i.e learning curve) and your model
 #Done Training 
 
-def test(x_test, y_test, export_dir):
+def test(x_test, y_test, model):
     # TODO: test your network here by evaluating it on the test data
     graph = tf.get_default_graph()
     graph = tf.Graph()
 
     with tf.Session(graph = graph) as sess:
-        saver = tf.train.Saver()
+        saver = tf.train.import_meta_graph(model + '.meta')
+        #saver = tf.train.Saver()
         saver.restore(sess, model)
         accuracy = graph.get_tensor_by_name("accuracy:0")
         x_image = graph.get_tensor_by_name("x_image:0")

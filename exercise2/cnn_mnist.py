@@ -91,7 +91,7 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     global count #To keep a count of models for multiple experiments otherwise resource exhausted error
     x_image = tf.placeholder(tf.float32, shape=[None,28,28,1], name = "x_image")
     y_ = tf.placeholder(tf.float32, shape=[None, 10], name = "y_")
-    y_conv = tf.placeholder(tf.float32, shape=[None, 10], name= 'y_conv')
+    #y_conv = tf.placeholder(tf.float32, shape=[None, 10], name= 'y_conv')
 
     W_conv1 = weight_variable([filter_size, filter_size, 1, num_filters])
     b_conv1 = bias_variable([num_filters])
@@ -107,6 +107,13 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     b_fc1 = bias_variable([128])
 
     h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*num_filters])
+
+    dense = tf.layers.dense(inputs = h_pool2_flat, units = 128, activation = tf.nn.relu)
+
+    y_pred = tf.layers.dense(inputs = dense, units = 10)
+
+    
+    
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
     keep_prob = tf.placeholder(tf.float32, name = "keep")
     #keep_prob = 0.5
@@ -123,33 +130,35 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
 
    
 
-    cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
+    #cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
+    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels = y_ , logits = y_pred)
+    cross_entropy = tf.reduce_mean(cross_entropy)*100
     train_step = tf.train.GradientDescentOptimizer(lr).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
+    correct_prediction = tf.equal(tf.argmax(y_pred,1), tf.argmax(y_,1))
     saver = tf.train.Saver()
     learning_curve = np.zeros(num_epochs)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
 
     with tf.Session() as sess:
         #accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
-        sess.run(tf.initialize_all_variables())
+        #sess.run(tf.initialize_all_variables())
+        sess.run(tf.global_variables_initializer())
         
         #learning_curve = np.zeros(num_epochs)
         for i in range(num_epochs):
             for b in range(n_batches):
                 x_batch = x_train[b*batch_size:(b+1)*batch_size]
                 y_batch = y_train[b*batch_size:(b+1)*batch_size]
-                #train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.2})
+                train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 1.0})
                 #train_step.run(feed_dict={x_image: x_batch, y_: y_batch})
                     
                 #print("step %d, training accuracy %g"%(i, train_accuracy))
-                train_accuracy = 1 - accuracy.eval(feed_dict={x_image:x_batch, y_: y_batch, keep_prob: 0.2})
-                train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.2})
-                #train_accuracy = 1 - accuracy.eval(feed_dict={x_image:x_train , y_: y_train})
+            #train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.2})
+            #train_accuracy = 1 - accuracy.eval(feed_dict={x_image:x_train , y_: y_train})
                 
-            learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 0.2})
+            learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0})
             #learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid})
-            print("step %d, training accuracy %g"%(i, train_accuracy))
+            print("step %d, train error %g"%(i, learning_curve[i]))
             """print("test accuracy %g"%accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 0.2}))  """    
         
         #export_dir = "C:/Users/Shashank/Documents/Winter semester 2018-19/dl-lab-2018/exercise2/model1.ckpt"
@@ -177,7 +186,7 @@ def test(x_test, y_test, model):
         x_image = graph.get_tensor_by_name("x_image:0")
         y_ = graph.get_tensor_by_name("y_:0")
         keep = graph.get_tensor_by_name("keep:0")
-        test_error = 1 - accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep: 0.2})
+        test_error = 1 - accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep: 1.0})
     
     return test_error
 
@@ -188,7 +197,7 @@ if __name__ == "__main__":
                         help="Path where the results will be stored")
     parser.add_argument("--input_path", default="./", type=str, nargs="?",
                         help="Path where the data is located. If the data is not available it will be downloaded first")
-    parser.add_argument("--learning_rate", default=1e-3, type=float, nargs="?", help="Learning rate for SGD")
+    parser.add_argument("--learning_rate", default=1e-1, type=float, nargs="?", help="Learning rate for SGD")
     parser.add_argument("--num_filters", default=16, type=int, nargs="?",
                         help="The number of filters for each convolution layer")
     parser.add_argument("--batch_size", default=128, type=int, nargs="?", help="Batch size for SGD")
@@ -234,6 +243,15 @@ if __name__ == "__main__":
     json.dump(results, fh)
     fh.close()
 
+    plt.plot(learning_curve, label = str(lr))
+
+    plt.ylabel('Validation error')
+    plt.xlabel('Epochs')
+    plt.title('Exercise 2.1 Results')
+    plt.legend()
+    plt.savefig('exrcise 2.1.png')
+    plt.close()
+
 
     lrs = [0.1, 0.01, 0.001, 0.0001]
     for i in range(len(lrs)):
@@ -269,7 +287,7 @@ if __name__ == "__main__":
     plt.xlabel('Epochs')
     plt.title('Exercise 2.2 Results: Learning Rates')
     plt.legend()
-    plt.savefig('./graphs/learning_rates.png')
+    plt.savefig('learning_rates.png')
     plt.close()
 
         
@@ -308,5 +326,5 @@ if __name__ == "__main__":
     plt.xlabel('Epochs')
     plt.title('Exercise 2.3 Results: Filter Sizes')
     plt.legend()
-    plt.savefig('./graphs/filter_sizes.png')
+    plt.savefig('filter_sizes.png')
     plt.close()

@@ -11,6 +11,11 @@ import tensorflow as tf
 
 import numpy as np
 
+import matplotlib
+matplotlob.use('Agg')
+
+import matplotlib.pyplot as plt
+
 count =0
 
 def one_hot(labels):
@@ -77,7 +82,7 @@ def conv2d(x, W):
 
 def max_pool_2x2(x):
   return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                        strides=[1, 2, 2, 1], padding='SAME')
+                        strides=[1, 2, 2, 1], padding='VALID')
 
 
 def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_filters, batch_size, fitler_size):
@@ -86,27 +91,28 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     global count #To keep a count of models for multiple experiments otherwise resource exhausted error
     x_image = tf.placeholder(tf.float32, shape=[None,28,28,1], name = "x_image")
     y_ = tf.placeholder(tf.float32, shape=[None, 10], name = "y_")
+    y_conv = tf.placeholder(tf.float32, shape=[None, 10], name= 'y_conv')
 
-    W_conv1 = weight_variable([5, 5, 1, 32])
-    b_conv1 = bias_variable([32])
+    W_conv1 = weight_variable([filter_size, filter_size, 1, num_filters])
+    b_conv1 = bias_variable([num_filters])
 
     h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
     h_pool1 = max_pool_2x2(h_conv1)
-    W_conv2 = weight_variable([5, 5, 32, 64])
-    b_conv2 = bias_variable([64])
+    W_conv2 = weight_variable([filter_size, filter_size, num_filters, num_filters])
+    b_conv2 = bias_variable([num_filters])
 
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
     h_pool2 = max_pool_2x2(h_conv2)
-    W_fc1 = weight_variable([7 * 7 * 64, 1024])
-    b_fc1 = bias_variable([1024])
+    W_fc1 = weight_variable([7 * 7 * num_filters, 128])
+    b_fc1 = bias_variable([128])
 
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
+    h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*num_filters])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
     keep_prob = tf.placeholder(tf.float32, name = "keep")
     #keep_prob = 0.5
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-    W_fc2 = weight_variable([1024, 10])
+    W_fc2 = weight_variable([128, 10])
     b_fc2 = bias_variable([10])
 
     y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
@@ -121,26 +127,30 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     train_step = tf.train.GradientDescentOptimizer(lr).minimize(cross_entropy)
     correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
     saver = tf.train.Saver()
+    learning_curve = np.zeros(num_epochs)
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
 
     with tf.Session() as sess:
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
+        #accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
         sess.run(tf.initialize_all_variables())
-        learning_curve = np.zeros(num_epochs)
         
+        #learning_curve = np.zeros(num_epochs)
         for i in range(num_epochs):
             for b in range(n_batches):
                 x_batch = x_train[b*batch_size:(b+1)*batch_size]
                 y_batch = y_train[b*batch_size:(b+1)*batch_size]
-                train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.5})
+                #train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.2})
                 #train_step.run(feed_dict={x_image: x_batch, y_: y_batch})
                     
-                    #print("step %d, training accuracy %g"%(i, train_accuracy))
-            train_accuracy = 1- accuracy.eval(feed_dict={x_image:x_batch, y_: y_batch, keep_prob: 1.0})
-            #train_accuracy = 1 - accuracy.eval(feed_dict={x_image:x_train , y_: y_train})
-            learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0})
+                #print("step %d, training accuracy %g"%(i, train_accuracy))
+                train_accuracy = 1 - accuracy.eval(feed_dict={x_image:x_batch, y_: y_batch, keep_prob: 0.2})
+                train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.2})
+                #train_accuracy = 1 - accuracy.eval(feed_dict={x_image:x_train , y_: y_train})
+                
+            learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 0.2})
             #learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid})
             print("step %d, training accuracy %g"%(i, train_accuracy))
-            """print("test accuracy %g"%accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0}))  """    
+            """print("test accuracy %g"%accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 0.2}))  """    
         
         #export_dir = "C:/Users/Shashank/Documents/Winter semester 2018-19/dl-lab-2018/exercise2/model1.ckpt"
         #model = tf.saved_model.simple_save(sess, export_dir, inputs = {"x": x_image}, outputs={"y":y_})
@@ -167,7 +177,7 @@ def test(x_test, y_test, model):
         x_image = graph.get_tensor_by_name("x_image:0")
         y_ = graph.get_tensor_by_name("y_:0")
         keep = graph.get_tensor_by_name("keep:0")
-        test_error = 1 - accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep: 0.5})
+        test_error = 1 - accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep: 0.2})
     
     return test_error
 
@@ -179,7 +189,7 @@ if __name__ == "__main__":
     parser.add_argument("--input_path", default="./", type=str, nargs="?",
                         help="Path where the data is located. If the data is not available it will be downloaded first")
     parser.add_argument("--learning_rate", default=1e-3, type=float, nargs="?", help="Learning rate for SGD")
-    parser.add_argument("--num_filters", default=32, type=int, nargs="?",
+    parser.add_argument("--num_filters", default=16, type=int, nargs="?",
                         help="The number of filters for each convolution layer")
     parser.add_argument("--batch_size", default=128, type=int, nargs="?", help="Batch size for SGD")
     parser.add_argument("--epochs", default=12, type=int, nargs="?",
@@ -194,7 +204,7 @@ if __name__ == "__main__":
     num_filters = args.num_filters
     batch_size = args.batch_size
     epochs = args.epochs
-    filter_size = 4
+    filter_size = 3
 
     # train and test convolutional neural network
     x_train, y_train, x_valid, y_valid, x_test, y_test = mnist(args.input_path)
@@ -253,6 +263,17 @@ if __name__ == "__main__":
         json.dump(results, fh)
         fh.close()
 
+        plt.plot(learning_curve, label = str(lrs[i]))
+
+    plt.ylabel('Validation error')
+    plt.xlabel('Epochs')
+    plt.title('Exercise 2.2 Results: Learning Rates')
+    plt.legend()
+    plt.savefig('./graphs/learning_rates.png')
+    plt.close()
+
+        
+
     filters = [1, 3, 5, 7]
     for i in range(len(filters)):
         x_train, y_train, x_valid, y_valid, x_test, y_test = mnist(args.input_path)
@@ -280,3 +301,12 @@ if __name__ == "__main__":
         fh = open(fname, "w")
         json.dump(results, fh)
         fh.close()
+
+        plt.plot(learning_curve, label = str(filters[i]))
+
+    plt.ylabel('Validation error')
+    plt.xlabel('Epochs')
+    plt.title('Exercise 2.3 Results: Filter Sizes')
+    plt.legend()
+    plt.savefig('./graphs/filter_sizes.png')
+    plt.close()

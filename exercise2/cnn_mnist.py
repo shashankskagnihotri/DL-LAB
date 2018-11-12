@@ -5,6 +5,7 @@ import gzip
 import json
 import os
 import pickle
+import pandas as pd
 import tensorflow as tf
 
 
@@ -102,12 +103,14 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
     keep_prob = tf.placeholder(tf.float32, name = "keep")
+    #keep_prob = 0.5
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
     W_fc2 = weight_variable([1024, 10])
     b_fc2 = bias_variable([10])
 
     y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
+    #y_conv=tf.nn.softmax(W_fc2 + b_fc2)
 
     n_samples = x_train.shape[0]
     n_batches = n_samples // batch_size
@@ -117,6 +120,7 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
     train_step = tf.train.GradientDescentOptimizer(lr).minimize(cross_entropy)
     correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
+    saver = tf.train.Saver()
 
     with tf.Session() as sess:
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
@@ -128,17 +132,20 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
                 x_batch = x_train[b*batch_size:(b+1)*batch_size]
                 y_batch = y_train[b*batch_size:(b+1)*batch_size]
                 train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.5})
+                #train_step.run(feed_dict={x_image: x_batch, y_: y_batch})
                     
                     #print("step %d, training accuracy %g"%(i, train_accuracy))
-            train_accuracy = accuracy.eval(feed_dict={x_image:x_batch, y_: y_batch, keep_prob: 1.0})
+            train_accuracy = 1- accuracy.eval(feed_dict={x_image:x_batch, y_: y_batch, keep_prob: 1.0})
+            #train_accuracy = 1 - accuracy.eval(feed_dict={x_image:x_train , y_: y_train})
             learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0})
+            #learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid})
             print("step %d, training accuracy %g"%(i, train_accuracy))
             """print("test accuracy %g"%accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0}))  """    
         
         #export_dir = "C:/Users/Shashank/Documents/Winter semester 2018-19/dl-lab-2018/exercise2/model1.ckpt"
         #model = tf.saved_model.simple_save(sess, export_dir, inputs = {"x": x_image}, outputs={"y":y_})
-        saver = tf.train.Saver()
-        sess.run(tf.global_variables_initializer())
+        
+        #sess.run(tf.global_variables_initializer())
         
         model = saver.save(sess, './models/model' + str(count) + '.ckpt')
         count += 1
@@ -159,7 +166,8 @@ def test(x_test, y_test, model):
         accuracy = graph.get_tensor_by_name("accuracy:0")
         x_image = graph.get_tensor_by_name("x_image:0")
         y_ = graph.get_tensor_by_name("y_:0")
-        test_error = 1 - accuracy.eval(feed_dict={x_image: x_test, y_: y_test})
+        keep = graph.get_tensor_by_name("keep:0")
+        test_error = 1 - accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep: 0.5})
     
     return test_error
 
@@ -207,6 +215,10 @@ if __name__ == "__main__":
 
     fname = os.path.join(path, "results_run_%d.json" % args.run_id)
 
+    #results = results.tolist()
+    results = pd.Series(results).to_json()
+
+
     fh = open(fname, "w")
     json.dump(results, fh)
     fh.close()
@@ -216,7 +228,7 @@ if __name__ == "__main__":
     for i in range(len(lrs)):
         x_train, y_train, x_valid, y_valid, x_test, y_test = mnist(args.input_path)
 
-        learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, epochs, lrs[i], num_filters, batch_size, filter_size)
+        learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, epochs, lrs[i], num_filters, batch_size)
 
         test_error = test(x_test, y_test, model)
 
@@ -232,6 +244,9 @@ if __name__ == "__main__":
         os.makedirs(path, exist_ok=True)
 
         fname = os.path.join(path, "results_run_" + str(i+1) + ".json")
+
+        #results = results.tolist()
+        results = pd.Series(results).to_json()
 
         fh = open(fname, "w")
         json.dump(results, fh)
@@ -257,6 +272,9 @@ if __name__ == "__main__":
         os.makedirs(path, exist_ok=True)
 
         fname = os.path.join(path, "results_run_" + str(i+1) + ".json")
+
+        #results = results.tolist()
+        results = pd.Series(results).to_json()
 
         fh = open(fname, "w")
         json.dump(results, fh)

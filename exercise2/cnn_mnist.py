@@ -12,7 +12,7 @@ import tensorflow as tf
 import numpy as np
 
 import matplotlib
-matplotlob.use('Agg')
+matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 

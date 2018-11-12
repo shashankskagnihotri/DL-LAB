@@ -15,7 +15,7 @@ import argparse
 
 import tensorflow as tf
 import numpy as np
-from cnn_mnist_solution import mnist
+from cnn_mnist import mnist
 
 #SAVE_PATH = 'C:/Users/Shashank/Documents/Winter semester 2018-19/dl-lab-2018/exercise2/'
 
@@ -89,7 +89,9 @@ class MyWorker(Worker):
 
         y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
-        cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
+        #cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
+        cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels = y_ , logits = y_conv)
+        cross_entropy = tf.reduce_mean(cross_entropy)*100
         train_step = tf.train.GradientDescentOptimizer(lr).minimize(cross_entropy)
         correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')  
@@ -111,8 +113,8 @@ class MyWorker(Worker):
                     
                     train_accuracy = accuracy.eval(feed_dict={x_image:x_batch, y_: y_batch, keep_prob: 1.0})
                     #print("step %d, training accuracy %g"%(i, train_accuracy))
-                    train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.5})
-                print("epoch %d, training accuracy %g"%(i, train_accuracy))
+                    train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 1.0})
+                print("step %d, training accuracy %g"%(i, train_accuracy))
                 learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: self.x_valid, y_: self.y_valid, keep_prob: 1.0})
         # TODO: train and validate your convolutional neural networks here
         validation_error = learning_curve[-1]
@@ -144,8 +146,8 @@ class MyWorker(Worker):
 
 parser = argparse.ArgumentParser(description='Example 1 - sequential and local execution.')
 parser.add_argument('--budget', type=float,
-                    help='Maximum budget used during the optimization, i.e the number of epochs.', default=15)
-parser.add_argument('--n_iterations', type=int, help='Number of iterations performed by the optimizer', default=20)
+                    help='Maximum budget used during the optimization, i.e the number of epochs.', default=6)
+parser.add_argument('--n_iterations', type=int, help='Number of iterations performed by the optimizer', default=50)
 args = parser.parse_args()
 
 # Step 1: Start a nameserver
@@ -261,7 +263,9 @@ b_fc2 = bias_variable([10])
 
 y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
-cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
+#cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
+cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels = y_ , logits = y_conv)
+cross_entropy = tf.reduce_mean(cross_entropy)*100
 train_step = tf.train.GradientDescentOptimizer(lr).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name='accuracy')  
@@ -281,7 +285,7 @@ with tf.Session() as sess:
             y_batch = Y_split[b]
             
             #train_accuracy = accuracy.eval(feed_dict={x_image:x_batch, y_: y_batch, keep_prob: 1.0})
-            train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.5})
+            train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 1.0})
         #print("epoch %d, training accuracy %g"%(i, train_accuracy))
 
     print(accuracy.eval(feed_dict={x_image: x_test, y_: y_test, keep_prob: 1.0}))

@@ -117,24 +117,27 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
     keep_prob = tf.placeholder(tf.float32, name = "keep")
     #keep_prob = 0.5
-    h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
+    h_fc1_drop = tf.nn.dropout(h_fc1, 1.0)
 
     W_fc2 = weight_variable([128, 10])
     b_fc2 = bias_variable([10])
 
     y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
+    #y_something = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
     #y_conv=tf.nn.softmax(W_fc2 + b_fc2)
 
     n_samples = x_train.shape[0]
     n_batches = n_samples // batch_size
 
+
    
 
     #cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
-    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels = y_ , logits = y_pred)
+    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels = y_ , logits = y_conv)
+    #cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels = y_ , logits = y_something)
     cross_entropy = tf.reduce_mean(cross_entropy)*100
     train_step = tf.train.GradientDescentOptimizer(lr).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y_pred,1), tf.argmax(y_,1))
+    correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
     saver = tf.train.Saver()
     learning_curve = np.zeros(num_epochs)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
@@ -159,7 +162,7 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
             learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0})
             #learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid})
             print("step %d, train error %g"%(i, learning_curve[i]))
-            """print("test accuracy %g"%accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 0.2}))  """    
+            #print("test accuracy %g"%accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 0.2})) 
         
         #export_dir = "C:/Users/Shashank/Documents/Winter semester 2018-19/dl-lab-2018/exercise2/model1.ckpt"
         #model = tf.saved_model.simple_save(sess, export_dir, inputs = {"x": x_image}, outputs={"y":y_})
@@ -172,6 +175,9 @@ def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_f
 
     return learning_curve, model  # TODO: Return the validation error after each epoch (i.e learning curve) and your model
 #Done Training 
+
+
+
 
 def test(x_test, y_test, model):
     # TODO: test your network here by evaluating it on the test data

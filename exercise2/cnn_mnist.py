@@ -80,7 +80,7 @@ def max_pool_2x2(x):
                         strides=[1, 2, 2, 1], padding='SAME')
 
 
-def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_filters, batch_size):
+def train_and_validate(x_train, y_train, x_valid, y_valid, num_epochs, lr, num_filters, batch_size, fitler_size):
     # TODO: train and validate your convolutional neural networks with the provided data and hyperparameters
 
     global count #To keep a count of models for multiple experiments otherwise resource exhausted error
@@ -194,11 +194,12 @@ if __name__ == "__main__":
     num_filters = args.num_filters
     batch_size = args.batch_size
     epochs = args.epochs
+    filter_size = 4
 
     # train and test convolutional neural network
     x_train, y_train, x_valid, y_valid, x_test, y_test = mnist(args.input_path)
 
-    learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, epochs, lr, num_filters, batch_size)
+    learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, epochs, lr, num_filters, batch_size, filter_size)
 
     test_error = test(x_test, y_test, model)
 
@@ -228,7 +229,7 @@ if __name__ == "__main__":
     for i in range(len(lrs)):
         x_train, y_train, x_valid, y_valid, x_test, y_test = mnist(args.input_path)
 
-        learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, epochs, lrs[i], num_filters, batch_size)
+        learning_curve, model = train_and_validate(x_train, y_train, x_valid, y_valid, epochs, lrs[i], num_filters, batch_size, filter_size)
 
         test_error = test(x_test, y_test, model)
 

@@ -195,20 +195,30 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_path", default="./", type=str, nargs="?",
                         help="Path where the results will be stored")
+    
     parser.add_argument("--input_path", default="./", type=str, nargs="?",
                         help="Path where the data is located. If the data is not available it will be downloaded first")
-    parser.add_argument("--learning_rate", default=0.1, type=float, nargs="?", help="Learning rate for SGD")
-    parser.add_argument("--num_filters", default=16, type=int, nargs="?",
+    
+    parser.add_argument("--learning_rate", default= 0.047450787661061956, type=float, nargs="?", help="Learning rate for SGD")
+    
+    parser.add_argument("--num_filters", default=8, type=int, nargs="?",
                         help="The number of filters for each convolution layer")
-    parser.add_argument("--batch_size", default=128, type=int, nargs="?", help="Batch size for SGD")
+    
+    parser.add_argument("--batch_size", default=77, type=int, nargs="?", help="Batch size for SGD")
+    
     parser.add_argument("--epochs", default=12, type=int, nargs="?",
                         help="Determines how many epochs the network will be trained")
+    
     parser.add_argument("--run_id", default=0, type=int, nargs="?",
                         help="Helps to identify different runs of an experiments")
 
     args = parser.parse_args()
 
     #Best found configuration: {'batch_size': 49.08297250066807, 'learning_rate': 0.00011535857618364056, 'filter_size': 5, 'num_filters': 15}
+    #New Best found configuration: {'learning_rate': 0.014288430979099747, 'num_filters': 25, 'filter_size': 5, 'batch_size': 22.364840966119456}
+    #Even Newer Best found configuration: {'batch_size': 76.4252544475399, 'filter_size': 5, 'learning_rate': 0.047450787661061956, 'num_filters': 8}
+
+    
     #Current configuration: {'batch_size': 128, 'learning_rate': 0.1, 'filter_size': 3, 'num_filters': 16}
 
     # hyperparameters
@@ -216,7 +226,7 @@ if __name__ == "__main__":
     num_filters = args.num_filters
     batch_size = args.batch_size
     epochs = args.epochs
-    filter_size = 6
+    filter_size = 5
 
     # train and test convolutional neural network
     x_train, y_train, x_valid, y_valid, x_test, y_test = mnist(args.input_path)
@@ -252,7 +262,7 @@ if __name__ == "__main__":
     plt.xlabel('Epochs')
     plt.title('Exercise 2.1 Results')
     plt.legend()
-    plt.savefig('exrcise 2.1.png')
+    plt.savefig('exrcise 2.4 Optimized.png')
     plt.close()
 
     exit(0)

@@ -5,6 +5,7 @@ import numpy as np
 import os
 import gzip
 import matplotlib.pyplot as plt
+import color from skimage
 
 from model import Model
 from utils import *
@@ -43,6 +44,14 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
     # History:
     # At first you should only use the current image as input to your network to learn the next action. Then the input states
     # have shape (96, 96,1). Later, add a history of the last N images to your state so that a state has shape (96, 96, N).
+
+    '''SA'''
+
+    X_train = utils.rgb2gray(X_train)
+    X_valid = utils.rgb2gray(X_valid)
+    
+
+    '''SA'''
     
     return X_train, y_train, X_valid, y_valid
 

@@ -16,6 +16,8 @@ def run_episode(env, agent, rendering=True, max_timesteps=1000):
     step = 0
 
     state = env.reset()
+    print("state:", state)
+    print("\n\n\nstate shape", state.shape)
     while True:
         
         # TODO: preprocess the state in the same way than in in your preprocessing in train_agent.py
@@ -47,8 +49,8 @@ if __name__ == "__main__":
     n_test_episodes = 15                  # number of episodes to test
 
     # TODO: load agent
-    # agent = Model(...)
-    # agent.load("models/agent.ckpt")
+    agent = Model()
+    agent.load("models/agent.ckpt")
 
     env = gym.make('CarRacing-v0').unwrapped
 

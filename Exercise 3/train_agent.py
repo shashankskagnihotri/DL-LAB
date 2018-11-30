@@ -5,7 +5,8 @@ import numpy as np
 import os
 import gzip
 import matplotlib.pyplot as plt
-import color from skimage
+import tensorflow as tf
+
 
 from model import Model
 from utils import *
@@ -47,8 +48,33 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
 
     '''SA'''
 
-    X_train = utils.rgb2gray(X_train)
-    X_valid = utils.rgb2gray(X_valid)
+    X_train = rgb2gray(X_train)
+    X_train = np.expand_dims(X_train, axis=3)
+    X_valid = rgb2gray(X_valid)
+    X_valid = np.expand_dims(X_valid, axis=3)
+
+    
+    #X_valid = X_valid.astype('float32').reshape(X_valid.shape[0], 96, 96, 1)
+    
+    #X_train = x_train.astype('float32').reshape(X_train.shape[0], 96, 96, 1)
+    #y_train = y_train.astype('int32')
+
+    t = X_train.shape[0]
+    v = X_valid.shape[0]
+
+    y_train_id = np.zeros(t, dtype = int)
+    y_valid_id = np.zeros(v, dtype = int)
+
+    for i in range(t):
+        y_train_id[i] = action_to_id(y_train[i])
+
+    for i in range(v):
+        y_valid_id[i] = action_to_id(y_valid[i])
+
+    y_train = one_hot(y_train_id)
+    y_valid = one_hot(y_valid_id)
+    print('... done loading data')
+
     
 
     '''SA'''
@@ -56,7 +82,8 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
     return X_train, y_train, X_valid, y_valid
 
 
-def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_dir="./models", tensorboard_dir="./tensorboard"):
+
+def train_model(x_train, y_train, x_valid, n_minibatches, batch_size, lr, model_dir="./models", tensorboard_dir="./tensorboard"):
     
     # create result and model folders
     if not os.path.exists(model_dir):
@@ -66,7 +93,7 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
 
 
     # TODO: specify your neural network in model.py 
-    # agent = Model(...)
+    agent = Model()
     
     tensorboard_eval = Evaluation(tensorboard_dir)
 
@@ -82,8 +109,14 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
     #     tensorboard_eval.write_episode_data(...)
       
     # TODO: save your agent
-    # model_dir = agent.save(os.path.join(model_dir, "agent.ckpt"))
-    # print("Model saved in file: %s" % model_dir)
+    model_dir = agent.save(os.path.join(model_dir, "agent.ckpt"))
+    print("Model saved in file: %s" % model_dir)
+
+    
+
+   
+
+    '''SA'''
 
 
 if __name__ == "__main__":

@@ -17,8 +17,9 @@ def run_episode(env, agent, rendering=True, max_timesteps=1000, history_length =
 
     state = env.reset()
     state_history = np.zeros((1, state.shape[0], state.shape[1], history_length))
+    #state_history = np.zeros((1, state.shape[0], state.shape[1]))
     
-    print("state:", state)
+    #print("state:", state)
     print("\n\n\nstate shape", state.shape, "\n\n\n\n")
     while True:
         
@@ -26,10 +27,16 @@ def run_episode(env, agent, rendering=True, max_timesteps=1000, history_length =
         #    state = ...
 
         state = rgb2gray(state)
-        state_history[0,:,:,0:history_length-1] = state_history[0,:,:,1:]
-        state_history[0,:,:,-1] = state
-
+        state = np.expand_dims(state, axis=3)
+        state_history[0,:,:,0:history_length-1] = state_history[0,:,:,1:]        
+        #state_history[0,:,:] = state_history[0,:,:]
+        #temp = state_history.reshape([1,96,96])
         print("state_history.shape", state_history.shape, "\n\n\n\n\n")
+        print("\n\n\nstate shape again", state.shape, "\n\n\n\n")
+        state_history[0,:,:] = state
+        #state_history[0,:] = state
+
+        
         
         # TODO: get the action from your agent! If you use discretized actions you need to transform them to continuous
         # actions again. a needs to have a shape like np.array([0.0, 0.0, 0.0])

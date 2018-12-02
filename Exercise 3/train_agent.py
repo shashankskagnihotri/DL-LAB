@@ -1,11 +1,14 @@
 from __future__ import print_function
 
+import argparse
+
 import pickle
 import numpy as np
 import os
 import gzip
 import matplotlib.pyplot as plt
-import color from skimage
+import tensorflow as tf
+
 
 from model import Model
 from utils import *
@@ -33,7 +36,32 @@ def read_data(datasets_dir="./data", frac = 0.1):
     return X_train, y_train, X_valid, y_valid
 
 
-def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
+def reshaped_history(x, history_length):
+
+    print("Shape of x", x.shape)
+    reshaped = np.empty((x.shape[0] - history_length + 1, x.shape[1], x.shape[2], history_length))
+    print("Shape of Reshaped", reshaped.shape)
+    #print("x:",x)
+
+    for index in range(x.shape[0] - history_length):
+        reshaped[index, :, :, :] = np.transpose(x[index: index + history_length, :, :, 0], (1, 2, 0))
+
+    return reshaped
+
+def reshaped_history_y(y, history_length):
+
+    print("Shape of y", y.shape)
+    reshaped = np.empty((y.shape[0] - history_length + 1, y.shape[1], history_length))
+    print("Shape of Reshaped", reshaped.shape)
+    #print("y:",y)
+
+    for index in range(y.shape[0] - history_length):
+        reshaped[index, :, :] = np.transpose(y[index: index + history_length,  0], ( 0))
+
+    return reshaped
+
+
+def preprocessing(X_train, y_train, X_valid, y_valid, history_length=3):
 
     # TODO: preprocess your data here.
     # 1. convert the images in X_train/X_valid to gray scale. If you use rgb2gray() from utils.py, the output shape (96, 96, 1)
@@ -47,44 +75,51 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
 
     '''SA'''
 
-    X_train = utils.rgb2gray(X_train)
-    X_valid = utils.rgb2gray(X_valid)
+    X_train = rgb2gray(X_train)
+    X_train = np.expand_dims(X_train, axis=3)
+    X_valid = rgb2gray(X_valid)
+    X_valid = np.expand_dims(X_valid, axis=3)
 
     
-    X_valid = X_valid.astype('float32')
-    X_valid = X_valid.astype('float32').reshape(X_valid.shape[0], 96, 96, 1)
-    y_valid = y_valid.astype('int32')
+    X_valid = X_valid.reshape(X_valid.shape[0], 96, 96, 1)
     
-    X_train = x_train.astype('float32').reshape(X_train.shape[0], 96, 96, 1)
-    y_train = y_train.astype('int32')
+    X_train = X_train.reshape(X_train.shape[0], 96, 96, 1)
+    #y_train = y_train.astype('int32')
+
+    t = X_train.shape[0]
+    v = X_valid.shape[0]
+
+    y_train_id = np.zeros(t, dtype = int)
+    y_valid_id = np.zeros(v, dtype = int)
+
+    for i in range(t):
+        y_train_id[i] = action_to_id(y_train[i])
+
+    for i in range(v):
+        y_valid_id[i] = action_to_id(y_valid[i])
+
+    y_train = one_hot(y_train_id)
+    y_valid = one_hot(y_valid_id)
     print('... done loading data')
 
-    
+    if history_length > 1 :
+        X_train = reshaped_history(X_train, history_length)
+        
+        
+        X_valid = reshaped_history(X_valid, history_length)
+        y_train = reshaped_history_y(y_train, history_length)
+        print("Shape of y_train", y_train.shape)
+        #y_train[history_length:] = y_train[history_length - 1:]
+        y_valid = reshaped_history_y(y_valid, history_length)
+        #y_valid[history_length:] = y_valid[history_length - 1:]
 
     '''SA'''
     
     return X_train, y_train, X_valid, y_valid
 
-'''SA'''
-def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial)
-
-def bias_variable(shape):
-  initial = tf.constant(0.1, shape=shape)
-  return tf.Variable(initial)
 
 
-def conv2d(x, W):
-      return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
-
-def max_pool_2x2(x):
-  return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-strides=[1, 2, 2, 1], padding='VALID')
-
-'''SA'''
-
-def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, num_filters, lr, model_dir="./models", tensorboard_dir="./tensorboard"):
+def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_dir="./models", tensorboard_dir="./tensorboard"):
     
     # create result and model folders
     if not os.path.exists(model_dir):
@@ -94,9 +129,19 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, num_filter
 
 
     # TODO: specify your neural network in model.py 
-    # agent = Model(...)
+    agent = Model(batch_size = batch_size, lr = lr, history_length = history_length)
+    print("... model created")
     
+    agent.sess.run(tf.global_variables_initializer())
     tensorboard_eval = Evaluation(tensorboard_dir)
+    
+    tf.reset_default_graph()
+    print("... model initialized")
+
+    training_error = np.zeros((n_minibatches))
+    validation_error = np.zeros((n_minibatches))
+
+    print("... initiating training")
 
     # TODO: implement the training
     # 
@@ -108,100 +153,67 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, num_filter
     # for i in range(n_minibatches):
     #     ...
     #     tensorboard_eval.write_episode_data(...)
-      
-    # TODO: save your agent
-    # model_dir = agent.save(os.path.join(model_dir, "agent.ckpt"))
-    # print("Model saved in file: %s" % model_dir)
 
-    '''SA'''
+    for i in range(n_minibatches):
+        first_index = np.random.randint(0, X_train.shape[0] - batch_size - history_length - 1)
+        last_index = first_index + batch_size
 
-    x_image = tf.placeholder(tf.float32, shape=[None,96,96,1], name = "x_image")
-    y_ = tf.placeholder(tf.float32, shape=[None, 10], name = "y_")
-    #y_conv = tf.placeholder(tf.float32, shape=[None, 10], name= 'y_conv')
+        X_train_mini = X_train[first_index : last_index, :, :, :]
+        y_train_mini = y_train[first_index : last_index, :]
 
-    W_conv1 = weight_variable([filter_size, filter_size, 1, num_filters])
-    b_conv1 = bias_variable([num_filters])
+        training_error[i] += agent.sess.run(agent.cost, feed_dict={agent.x_image: X_train_mini, agent.y_: y_train_mini})
+        validation_error[i] += agent.sess.run(agent.cost, feed_dict={agent.x_image: X_train_mini, agent.y_: y_train_mini})
 
-    h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
-    h_pool1 = max_pool_2x2(h_conv1)
-    W_conv2 = weight_variable([filter_size, filter_size, num_filters, num_filters])
-    b_conv2 = bias_variable([num_filters])
+        # compute training/ validation accuracy and loss for the batch and visualize them with tensorboard. You can watch the progress of
+        #    your training in your web browser
+        # if (i % when_to_show == 0):
+            # train_loss, train_accuracy = agent.evaluate(X_train, y_train)
+            # valid_loss, valid_accuracy = agent.evaluate(X_valid, y_valid)
 
-    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
-    h_pool2 = max_pool_2x2(h_conv2)
-    W_fc1 = weight_variable([7 * 7 * num_filters, 128])
-    b_fc1 = bias_variable([128])
+            # print(  "Minibatch: ", i ,
+            #         " Train accuracy: ", train_accuracy,
+            #         " Train Loss: ", train_loss,
+            #         ", Test accuracy: ", valid_accuracy,
+            #         " Test Loss: ", valid_loss)
 
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*num_filters])
+        print("[%d/%d]: training_error: %.2f, validation_error: %.2f" %(i+1, n_minibatches, 100*training_error[i], 100*validation_error[i]))
+        eval_dict = {"train":training_error[i], "valid":validation_error[i], "loss":1-training_error[i]}
+        tensorboard_eval.write_episode_data(i, eval_dict)
 
-    dense = tf.layers.dense(inputs = h_pool2_flat, units = 128, activation = tf.nn.relu)
-
-    y_pred = tf.layers.dense(inputs = dense, units = 10)
-
+    print("... completed training")
     
-    
-    h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
-    keep_prob = tf.placeholder(tf.float32, name = "keep")
-    #keep_prob = 0.5
-    h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
-
-    W_fc2 = weight_variable([128, 10])
-    b_fc2 = bias_variable([10])
-
-    y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
-    #y_conv=tf.nn.softmax(W_fc2 + b_fc2)
-
-    n_samples = x_train.shape[0]
-    n_batches = n_samples // batch_size
-
-   
-
-    #cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
-    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(labels = y_ , logits = y_conv)
-    cross_entropy = tf.reduce_mean(cross_entropy)*100
-    train_step = tf.train.GradientDescentOptimizer(lr).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
-    saver = tf.train.Saver()
-    learning_curve = np.zeros(num_epochs)
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
-
-    with tf.Session() as sess:
-        #accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
-        #sess.run(tf.initialize_all_variables())
-        sess.run(tf.global_variables_initializer())
-        
-        #learning_curve = np.zeros(num_epochs)
-        for i in range(num_epochs):
-            for b in range(n_batches):
-                x_batch = x_train[b*batch_size:(b+1)*batch_size]
-                y_batch = y_train[b*batch_size:(b+1)*batch_size]
-                train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 1.0})
-                #train_step.run(feed_dict={x_image: x_batch, y_: y_batch})
-                    
-                #print("step %d, training accuracy %g"%(i, train_accuracy))
-            #train_step.run(feed_dict={x_image: x_batch, y_: y_batch, keep_prob: 0.2})
-            #train_accuracy = 1 - accuracy.eval(feed_dict={x_image:x_train , y_: y_train})
-                
-            learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 1.0})
-            #learning_curve[i] = 1 - accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid})
-            print("step %d, train error %g"%(i, learning_curve[i]))
-"""print("test accuracy %g"%accuracy.eval(feed_dict={x_image: x_valid, y_: y_valid, keep_prob: 0.2}))  """
     # TODO: save your agent
-    model_dir = saver.save(sess, os.path.join(model_dir, "agent.ckpt")
-    #model_dir = agent.save(os.path.join(model_dir, "agent.ckpt"))
+    save_path = os.path.join(model_dir, "agent.ckpt")
+    agent.save(save_path)
+    agent.save(os.path.join(model_dir, "agent.ckpt"))
+    
     print("Model saved in file: %s" % model_dir)
+
+    
+   
 
     '''SA'''
 
 
 if __name__ == "__main__":
 
+    cmdline_parser = argparse.ArgumentParser('exercise3_R_NR')
+
+
+    cmdline_parser.add_argument(
+        '-l', '--history_length', default=1,
+        help='History Length', type=int)
+    args, unknowns = cmdline_parser.parse_known_args()
+
+    history_length = args.history_length
+
+
     # read data    
     X_train, y_train, X_valid, y_valid = read_data("./data")
 
     # preprocess data
-    X_train, y_train, X_valid, y_valid = preprocessing(X_train, y_train, X_valid, y_valid, history_length=1)
+    X_train, y_train, X_valid, y_valid = preprocessing(X_train, y_train, X_valid, y_valid, history_length = history_length)
 
     # train model (you can change the parameters!)
-    train_model(X_train, y_train, X_valid, n_minibatches=100000, batch_size=64, num_filter=5, lr=0.0001)
+    train_model(X_train, y_train, X_valid, n_minibatches=100000, batch_size=64, lr=0.01)
  

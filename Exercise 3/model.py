@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 class Model:
     
@@ -138,6 +139,8 @@ class Model:
         lstm_in = tf.expand_dims(fc3, axis=1)
 
         a_outputs, a_final_state = tf.nn.dynamic_rnn(cell=a_lstm, inputs=lstm_in, initial_state=a_init_state)
+        if history_length > 1:
+            a_outputs = self.reshaped_history(a_outputs, history_length)
         a_cell_out = tf.reshape(a_outputs, [-1, 256], name='flatten_lstm_outputs')
 
 
@@ -145,6 +148,7 @@ class Model:
         # ...       
 
         self.output = tf.contrib.layers.fully_connected(a_cell_out, 4, activation_fn=None)
+        #self.output = self.reshaped_history_y(self.output, history_length)
         self.cost = tf.reduce_mean(tf.losses.mean_squared_error(predictions=self.output, labels= self.y_))
 
         
@@ -229,5 +233,17 @@ class Model:
 
     def max_pool_2x2(self, x):
         return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+
+    def reshaped_history(self, x, history_length):
+        print("Shape of x", x.shape)
+        reshaped = np.empty((x.shape[0] - history_length + 1, x.shape[1], x.shape[2], history_length))
+        print("Shape of Reshaped", reshaped.shape)
+        #print("x:",x)
+
+        for index in range(x.shape[0] - history_length):
+            reshaped[index, :, :, :] = np.transpose(x[index: index + history_length, :, :, 0], (1, 2, 0))
+
+        return reshaped
 
         

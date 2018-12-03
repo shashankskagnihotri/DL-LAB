@@ -14,7 +14,7 @@ from model import Model
 from utils import *
 from tensorboard_evaluation import Evaluation
 
-def read_data(datasets_dir="./data", frac = 0.1):
+def read_data(datasets_dir="./data", frac = 0.25):
     """
     This method reads the states and actions recorded in drive_manually.py 
     and splits it into training/ validation set.
@@ -29,11 +29,71 @@ def read_data(datasets_dir="./data", frac = 0.1):
     X = np.array(data["state"]).astype('float32')
     y = np.array(data["action"]).astype('float32')
 
+
+    print("y.shape:", y.shape)
+
+    j = 0
+
+
+    for i in range(30000):
+        if all(y[i] == [0., 0. , 0.]):
+            if i > 17500:
+                continue
+            X[j] = X[i]
+            y[j] = [0., 1., 0.]
+            if i % 4 == 0 :
+                y[j] = [0., 0., 0.2]    
+            j += 1
+        else:
+            X[j] = X[i]
+            y[j] = y[i]
+            j += 1
+
+    X = np.append(X, X[:5000,:,:], axis = 0)
+    y = np.append(y, y[:5000,:], axis = 0)
+
+    print("y.shape:", y.shape)
+
+    
+
     # split data into training and validation set
     n_samples = len(data["state"])
     X_train, y_train = X[:int((1-frac) * n_samples)], y[:int((1-frac) * n_samples)]
     X_valid, y_valid = X[int((1-frac) * n_samples):], y[int((1-frac) * n_samples):]
+
+
+    ##for i in range(10000):
+    ##    print("\n\nIn Read y_train[",i,"]:", y_train[i])
+    ##    i += 103
+
+        
     return X_train, y_train, X_valid, y_valid
+
+
+def count_output_data_hot_instances(y, i = ''):
+
+    count_straight = 0
+    count_left = 0
+    count_right = 0
+    count_acc = 0
+    count_break = 0
+
+    for i in range(y.shape[0]):
+        if (y_train[i] == [1., 0., 0., 0.]):
+            count_straight += 1
+        if (y_train[i] == [0., 1., 0., 0.]):
+            count_left += 1
+        if (y_train[i] == [0., 0., 1., 0.]):
+            count_right += 1
+        if (y_train[i] == [0., 0., 0., 1.]):
+            count_acc += 1
+        if (y_train[i] == [0., 0., 0., 0.2]):
+            count_break += 1
+
+        print("\nStraight:",count_straight, "\nLeft:",count_left, "\nRight:",count_right,  "\nAccelerate:",count_acc, "\nBreak:",count_break)
+
+            
+
 
 
 def reshaped_history(x, history_length):
@@ -61,7 +121,7 @@ def reshaped_history_y(y, history_length):
     return reshaped
 
 
-def preprocessing(X_train, y_train, X_valid, y_valid, history_length=3):
+def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
 
     # TODO: preprocess your data here.
     # 1. convert the images in X_train/X_valid to gray scale. If you use rgb2gray() from utils.py, the output shape (96, 96, 1)
@@ -80,26 +140,36 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=3):
     X_valid = rgb2gray(X_valid)
     X_valid = np.expand_dims(X_valid, axis=3)
 
+    print("\n\n\n X_train[10]", X_train[10])
+    print("\n\n\n X_valid[10]", X_valid[10])
     
-    X_valid = X_valid.reshape(X_valid.shape[0], 96, 96, 1)
+    X_valid = X_valid.reshape(X_valid.shape[0], 96, 96)
     
-    X_train = X_train.reshape(X_train.shape[0], 96, 96, 1)
+    X_train = X_train.reshape(X_train.shape[0], 96, 96)
+
+    print("\n\n\n X_train[10]", X_train[10])
+    print("\n\n\n X_valid[10]", X_valid[10])
+    
     #y_train = y_train.astype('int32')
 
-    t = X_train.shape[0]
-    v = X_valid.shape[0]
+    y_train_id = np.zeros(y_train.shape[0], dtype = int)
+    y_valid_id = np.zeros(y_valid.shape[0], dtype = int)
 
-    y_train_id = np.zeros(t, dtype = int)
-    y_valid_id = np.zeros(v, dtype = int)
 
-    for i in range(t):
+    for i in range(X_train.shape[0]):
         y_train_id[i] = action_to_id(y_train[i])
 
-    for i in range(v):
+    for i in range(X_valid.shape[0]):
         y_valid_id[i] = action_to_id(y_valid[i])
 
+
+    for i in range(10000):
+        print("\n\ny_train[",i,"]:", y_train[i])
+        print("\n\ny_train_id[",i,"]:", y_train_id[i])
+        i += 103
     y_train = one_hot(y_train_id)
     y_valid = one_hot(y_valid_id)
+    
     print('... done loading data')
 
     if history_length > 1 :
@@ -108,7 +178,7 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=3):
         
         X_valid = reshaped_history(X_valid, history_length)
         y_train = reshaped_history_y(y_train, history_length)
-        print("Shape of y_train", y_train.shape)
+        #print("Shape of y_train", y_train.shape)
         #y_train[history_length:] = y_train[history_length - 1:]
         y_valid = reshaped_history_y(y_valid, history_length)
         #y_valid[history_length:] = y_valid[history_length - 1:]
@@ -128,65 +198,54 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
     print("... train model")
 
 
+    tensorboard_eval = Evaluation(tensorboard_dir)
+
     # TODO: specify your neural network in model.py 
     agent = Model(batch_size = batch_size, lr = lr, history_length = history_length)
     print("... model created")
+
+    train_accuracy = 0
+    valid_accuracy = 0
     
-    agent.sess.run(tf.global_variables_initializer())
-    tensorboard_eval = Evaluation(tensorboard_dir)
-    
-    tf.reset_default_graph()
-    print("... model initialized")
+    with agent.sess:
+        for epoch in range(n_minibatches):
+            _loss = 0
+            for i in range(X_train.shape[0] // batch_size):
+                first_index = np.random.randint(0, X_train.shape[0] - batch_size - history_length - 1)
+                last_index = first_index + batch_size
 
-    training_error = np.zeros((n_minibatches))
-    validation_error = np.zeros((n_minibatches))
+                X_train_mini = X_train[first_index : last_index, :, :]
+                y_train_mini = y_train[first_index : last_index, :]
 
-    print("... initiating training")
+                opt, l = agent.sess.run([agent.optimizer, agent.loss], feed_dict = {agent.x_image: X_train_mini, agent.y_: y_train_mini})
+                _loss += l/(X_train.shape[0] //batch_size)
 
-    # TODO: implement the training
-    # 
-    # 1. write a method sample_minibatch and perform an update step
-    # 2. compute training/ validation accuracy and loss for the batch and visualize them with tensorboard. You can watch the progress of
-    #    your training in your web browser
-    # 
-    # training loop
-    # for i in range(n_minibatches):
-    #     ...
-    #     tensorboard_eval.write_episode_data(...)
+            train_accuracy = agent.accuracy.eval(feed_dict = {agent.x_image: X_train_mini, agent.y_: y_train_mini})
 
-    for i in range(n_minibatches):
-        first_index = np.random.randint(0, X_train.shape[0] - batch_size - history_length - 1)
-        last_index = first_index + batch_size
+            print("\n\nPREDICTION:", agent.predict.eval(feed_dict={agent.x_image: X_train_mini}))
+            valid_accuracy = 0
 
-        X_train_mini = X_train[first_index : last_index, :, :, :]
-        y_train_mini = y_train[first_index : last_index, :]
+            for i in range(X_valid.shape[0] // batch_size):
+                first_index = np.random.randint(0, X_train.shape[0] - batch_size - history_length - 1)
+                last_index = first_index + batch_size
 
-        training_error[i] += agent.sess.run(agent.cost, feed_dict={agent.x_image: X_train_mini, agent.y_: y_train_mini})
-        validation_error[i] += agent.sess.run(agent.cost, feed_dict={agent.x_image: X_train_mini, agent.y_: y_train_mini})
+                X_valid_mini = X_valid[first_index : last_index, :, :]
+                y_valid_mini = y_valid[first_index : last_index, :]
 
-        # compute training/ validation accuracy and loss for the batch and visualize them with tensorboard. You can watch the progress of
-        #    your training in your web browser
-        # if (i % when_to_show == 0):
-            # train_loss, train_accuracy = agent.evaluate(X_train, y_train)
-            # valid_loss, valid_accuracy = agent.evaluate(X_valid, y_valid)
+                ac = agent.accuracy.eval(feed_dict={agent.x_image: X_valid_mini, agent.y_: y_valid_mini})
+                #print("ac:", ac)                    
+                valid_accuracy += ac /(X_valid.shape[0] //batch_size)
+                
 
-            # print(  "Minibatch: ", i ,
-            #         " Train accuracy: ", train_accuracy,
-            #         " Train Loss: ", train_loss,
-            #         ", Test accuracy: ", valid_accuracy,
-            #         " Test Loss: ", valid_loss)
+            eval_dict = {"train":train_accuracy, "valid":valid_accuracy, "loss":_loss}
+            tensorboard_eval.write_episode_data(epoch, eval_dict)
 
-        print("[%d/%d]: training_error: %.2f, validation_error: %.2f" %(i+1, n_minibatches, 100*training_error[i], 100*validation_error[i]))
-        eval_dict = {"train":training_error[i], "valid":validation_error[i], "loss":1-training_error[i]}
-        tensorboard_eval.write_episode_data(i, eval_dict)
+            print("Epoch:",epoch+1, "Train accuracy:", train_accuracy, "validation accuracy:", valid_accuracy, "loss:", _loss) 
 
-    print("... completed training")
-    
-    # TODO: save your agent
-    save_path = os.path.join(model_dir, "agent.ckpt")
-    agent.save(save_path)
-    agent.save(os.path.join(model_dir, "agent.ckpt"))
-    
+        save_path = os.path.join(model_dir, "agent.ckpt")
+        agent.save(save_path)
+
+    tensorboard_eval.close_session()
     print("Model saved in file: %s" % model_dir)
 
     
@@ -213,7 +272,11 @@ if __name__ == "__main__":
 
     # preprocess data
     X_train, y_train, X_valid, y_valid = preprocessing(X_train, y_train, X_valid, y_valid, history_length = history_length)
+    #count_output_data_hot_instances(y_train)
+    #count_output_data_hot_instances(y_valid)
+
+    print("... preprocessing done")
 
     # train model (you can change the parameters!)
-    train_model(X_train, y_train, X_valid, n_minibatches=100000, batch_size=64, lr=0.01)
+    train_model(X_train, y_train, X_valid, n_minibatches=100, batch_size=64, lr=0.01)
  

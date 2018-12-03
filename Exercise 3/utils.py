@@ -38,3 +38,15 @@ def action_to_id(a):
     elif all(a == [0.0, 0.0, 0.2]): return BRAKE             # BRAKE: 4
     else:       
         return STRAIGHT                                      # STRAIGHT = 0
+
+def id_to_action(id):
+    if id == LEFT:
+        return np.array([-1.0, 0.0, 0.0])
+    elif id == RIGHT:
+        return np.array([1.0, 0.0, 0.0])
+    elif id == ACCELERATE:
+        return np.array([0.0, 1.0, 0.0])
+    elif id == BRAKE:
+        return np.array([0.0, 0.0, np.float32(0.2)])
+    else:
+        return np.array([0.0, 0.0, 0.0])

@@ -49,7 +49,7 @@ def read_data(datasets_dir="./data", frac = 0.25):
 
     #print("Breaks changed: ", check)
 
-    
+    """
     for i in range(40000):
         if all(y[i] == [0., 0. , 0.]):
             if i > 25000:
@@ -65,10 +65,10 @@ def read_data(datasets_dir="./data", frac = 0.25):
             X[j] = X[i]
             y[j] = y[i]
             j += 1
-    '''
+    
     X = np.append(X, X[:20000,:,:], axis = 0)
     y = np.append(y, y[:20000,:], axis = 0)
-    '''
+    """
 
     
 

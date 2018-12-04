@@ -111,9 +111,10 @@ def run_episode(env, agent, history_length, rendering=True, max_timesteps=1000):
 
             #print("\n\nstate:", state)
 
-            #prediction = agent.predict.eval(feed_dict={agent.x_image: state})[0]
+            prediction = agent.predict.eval(feed_dict={agent.x_image: state})[0]
                                             
         
+            """
             if count < 3 :
                 prediction = 3
                 count += 1
@@ -121,7 +122,7 @@ def run_episode(env, agent, history_length, rendering=True, max_timesteps=1000):
             else:
                 prediction = agent.predict.eval(feed_dict={agent.x_image: state})[0]
                 count += 1
-            
+            """
 
             
                 

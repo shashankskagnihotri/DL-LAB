@@ -82,6 +82,7 @@ def read_data(datasets_dir="./data", frac = 0.25):
         if all(y[i] == [0., 0. , 0.]):
             X[j] = X[i]
             y[j] = random_action()
+	    print("y[j]: ", y[j])
         else:
             X[j] = X[i]
             y[j] = y[i]
@@ -187,7 +188,7 @@ def preprocessing(X_train, y_train, history_length):
     print("\n\n\n")
     '''
     
-    y_train = one_hot(y_train_id)
+    y_train = one_hot_new(y_train_id)
     
     #print('... done loading data')
 

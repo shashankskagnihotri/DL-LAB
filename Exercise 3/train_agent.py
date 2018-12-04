@@ -50,9 +50,9 @@ def read_data(datasets_dir="./data", frac = 0.25):
     #print("Breaks changed: ", check)
 
     
-    for i in range(30000):
+    for i in range(60000):
         if all(y[i] == [0., 0. , 0.]):
-            if i > 25000:
+            if i > 30000:
                 continue
             X[j] = X[i]
             y[j] = [0., 1., 0.]
@@ -72,7 +72,7 @@ def read_data(datasets_dir="./data", frac = 0.25):
 
     
 
-    print("y.shape:", y.shape)
+    #print("y.shape:", y.shape)
 
     
 

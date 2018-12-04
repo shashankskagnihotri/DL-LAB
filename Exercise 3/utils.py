@@ -6,7 +6,7 @@ STRAIGHT = 0
 ACCELERATE =3
 BRAKE = 4
 
-def one_hot(labels):
+def one_hot_new(labels):
     """
     this creates a one hot encoding from a flat vector:
     i.e. given y = [0,2,1]
@@ -34,14 +34,14 @@ def one_hot(labels):
     
     return one_hot_labels
 
-def one_hot_old(labels):
+def one_hot(labels):
     """
     this creates a one hot encoding from a flat vector:
     i.e. given y = [0,2,1]
      it creates y_one_hot = [[1,0,0], [0,0,1], [0,1,0]]
     """
     classes = np.unique(labels)
-    n_classes = classes.size
+    n_classes = 5
     print("n_classes: ", n_classes)
     one_hot_labels = np.zeros(labels.shape + (n_classes,))
     for c in classes:

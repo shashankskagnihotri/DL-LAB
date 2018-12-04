@@ -49,13 +49,11 @@ def read_data(datasets_dir="./data", frac = 0.25):
 
     #print("Breaks changed: ", check)
 
+    """
     for i in range(60000):
         if all(y[i] == [0., 0. , 0.]):
-            if i > 10000:
-                X[j] = X[i]
-		y[j] = random_action()
-		j += 1
-		continue
+            if i > 30000:
+                continue
             X[j] = X[i]
             y[j] = [0., 1., 0.]
             
@@ -67,7 +65,7 @@ def read_data(datasets_dir="./data", frac = 0.25):
             X[j] = X[i]
             y[j] = y[i]
             j += 1
-   
+    """
     '''
     X = np.append(X, X[:20000,:,:], axis = 0)
     y = np.append(y, y[:20000,:], axis = 0)
@@ -91,11 +89,6 @@ def read_data(datasets_dir="./data", frac = 0.25):
 
         
     return X_train, y_train, X_valid, y_valid
-
-def random_action():
-    val = something
-    if val = 0:
-         return [-1. , 0., 0.]
 
 
 def count_output_data_hot_instances(y, i = ''):

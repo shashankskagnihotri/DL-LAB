@@ -53,11 +53,26 @@ class Model:
         flatten = tf.reshape(pool3, shape = [-1, 1*8*8])
 
         fc1 = tf.contrib.layers.fully_connected(flatten, 1024, activation_fn=tf.nn.relu)
-        fc2 = tf.layers.dense(fc1, 400, activation = tf.nn.sigmoid, name = "fc2")
+        fc2 = tf.layers.dense(fc1, 512, activation = tf.nn.sigmoid, name = "fc2")
+        fc3 = tf.contrib.layers.fully_connected(fc2, 256, activation_fn=tf.nn.sigmoid)
+
+        '''
+
+        a_lstm = tf.nn.rnn_cell.LSTMCell(num_units=256)
+        a_lstm = tf.nn.rnn_cell.DropoutWrapper(a_lstm, output_keep_prob=1.0)
+        a_lstm = tf.nn.rnn_cell.MultiRNNCell(cells=[a_lstm])
+
+        a_init_state = a_lstm.zero_state(batch_size=batch_size, dtype=tf.float32)
+        lstm_in = tf.expand_dims(fc3, axis=1)
+
+        a_outputs, a_final_state = tf.nn.dynamic_rnn(cell=a_lstm, inputs=lstm_in, initial_state=a_init_state)
+
+        a_cell_out = tf.reshape(a_outputs, [-1, 256], name='flatten_lstm_outputs')
+        '''
         
 
         with tf.name_scope("output"):
-            self.logits = tf.layers.dense(fc2, 5, name = "output")
+            self.logits = tf.layers.dense(fc3, 5, name = "output")
             y_pred = tf.nn.softmax(self.logits, name = "y_pred")
             self.predict = tf.argmax(self.logits, 1)
             #print("\n\nPREDICTION:", self.predict)
@@ -117,7 +132,7 @@ class Model:
         a_lstm = tf.nn.rnn_cell.DropoutWrapper(a_lstm, output_keep_prob=1.0)
         a_lstm = tf.nn.rnn_cell.MultiRNNCell(cells=[a_lstm])
 
-        a_init_state = a_lstm.zero_state(batch_size=batch_size, dtype=tf.float32)
+        a_init_state = a_lstm.zero_state(batch_size=batch_size, dtype=tf.float64)
         lstm_in = tf.expand_dims(fc3, axis=1)
 
         a_outputs, a_final_state = tf.nn.dynamic_rnn(cell=a_lstm, inputs=lstm_in, initial_state=a_init_state)

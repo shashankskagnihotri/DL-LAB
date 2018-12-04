@@ -50,9 +50,9 @@ def read_data(datasets_dir="./data", frac = 0.25):
     #print("Breaks changed: ", check)
 
     
-    for i in range(35000):
+    for i in range(40000):
         if all(y[i] == [0., 0. , 0.]):
-            if i > 17500:
+            if i > 25000:
                 continue
             X[j] = X[i]
             y[j] = [0., 1., 0.]
@@ -201,9 +201,11 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
                 opt, l = agent.sess.run([agent.optimizer, agent.loss], feed_dict = {agent.x_image: X_train_mini, agent.y_: y_train_mini})
                 _loss += l/(X_train.shape[0] //batch_size)
 
+                #print("\n\nPREDICTION:", agent.predict.eval(feed_dict={agent.x_image: X_train_mini}))
+
             train_accuracy = agent.accuracy.eval(feed_dict = {agent.x_image: X_train_mini, agent.y_: y_train_mini})
 
-            print("\n\nPREDICTION:", agent.predict.eval(feed_dict={agent.x_image: X_train_mini}))
+                
             print('... training done')
             valid_accuracy = 0
 

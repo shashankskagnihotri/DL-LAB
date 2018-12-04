@@ -259,7 +259,7 @@ if __name__ == "__main__":
         '-l', '--history_length', default=1,
         help='Number of states to be considered in the history for prediction', type=int)
 
-   cmdline_parser.add_argument(
+    cmdline_parser.add_argument(
         '-n', '--n_minibatches', default=10,
         help='Number of mini batches to be formed for training, basically the number of epochs', type=int)
     args, unknowns = cmdline_parser.parse_known_args() 
@@ -283,4 +283,3 @@ if __name__ == "__main__":
     # train model (you can change the parameters!)
     train_model(X_train, y_train, X_valid, n_minibatches, batch_size=64, lr=0.01)
  
-

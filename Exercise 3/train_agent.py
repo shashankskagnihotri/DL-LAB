@@ -82,7 +82,7 @@ def read_data(datasets_dir="./data", frac = 0.25):
         if all(y[i] == [0., 0. , 0.]):
             X[j] = X[i]
             y[j] = random_action()
-	    print("y[j]: ", y[j])
+            print("y[j]: ", y[j])
         else:
             X[j] = X[i]
             y[j] = y[i]

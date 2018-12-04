@@ -7,6 +7,8 @@ import numpy as np
 import os
 import gzip
 
+import random
+
 
 import matplotlib
 matplotlib.use('Agg')
@@ -49,6 +51,7 @@ def read_data(datasets_dir="./data", frac = 0.25):
 
     #print("Breaks changed: ", check)
 
+    """
     for i in range(60000):
         if all(y[i] == [0., 0. , 0.]):
             if i > 10000:
@@ -67,11 +70,23 @@ def read_data(datasets_dir="./data", frac = 0.25):
             X[j] = X[i]
             y[j] = y[i]
             j += 1
-   
+    """
+
+    
     '''
     X = np.append(X, X[:20000,:,:], axis = 0)
     y = np.append(y, y[:20000,:], axis = 0)
     '''
+
+    for i in range(67000):
+        if all(y[i] == [0., 0. , 0.]):
+            X[j] = X[i]
+            y[j] = random_action()
+	else:
+            X[j] = X[i]
+            y[j] = y[i]
+        j += 1
+    
 
     
 
@@ -93,9 +108,17 @@ def read_data(datasets_dir="./data", frac = 0.25):
     return X_train, y_train, X_valid, y_valid
 
 def random_action():
-    val = something
-    if val = 0:
-         return [-1. , 0., 0.]
+    val = random.randint(0,4)
+    if val = 1:
+        return [-1., 0., 0.]
+    elif val = 2:
+        return [1., 0., 0.]
+    elif val = 3:
+        return [0., 1., 0.]
+    elif val = 4:
+        return [0., 0., 1.]
+    else:
+        return [0., 0., 0.]
 
 
 def count_output_data_hot_instances(y, i = ''):

@@ -109,13 +109,13 @@ def read_data(datasets_dir="./data", frac = 0.25):
 
 def random_action():
     val = random.randint(0,4)
-    if val = 1:
+    if val == 1:
         return [-1., 0., 0.]
-    elif val = 2:
+    elif val == 2:
         return [1., 0., 0.]
-    elif val = 3:
+    elif val == 3:
         return [0., 1., 0.]
-    elif val = 4:
+    elif val == 4:
         return [0., 0., 1.]
     else:
         return [0., 0., 0.]

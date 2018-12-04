@@ -6,7 +6,14 @@ import pickle
 import numpy as np
 import os
 import gzip
+
+
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
+
+
 import tensorflow as tf
 
 
@@ -30,36 +37,40 @@ def read_data(datasets_dir="./data", frac = 0.25):
     y = np.array(data["action"]).astype('float32')
 
 
-    print("y.shape:", y.shape)
+    #print("y.shape:", y.shape)
 
     j = 0
-
     check = False
 
-    for i in range(34999):
+    for i in range(y.shape[0] - 1):
         if all(y[i] == [0., 0. , np.float32(0.2)]):
             y[i] = [0., 0., 1.]
             check = True
 
-    print("Breaks changed: ", check)
+    #print("Breaks changed: ", check)
 
-
-    for i in range(30000):
+    
+    for i in range(35000):
         if all(y[i] == [0., 0. , 0.]):
             if i > 17500:
                 continue
             X[j] = X[i]
             y[j] = [0., 1., 0.]
-            if i % 4 == 0 :
-                y[j] = [0., 0., 1.]    
+            
+            if i % 7 == 0 :
+                y[j] = [0., 0., 1.]                        
+            
             j += 1
         else:
             X[j] = X[i]
             y[j] = y[i]
             j += 1
+    '''
+    X = np.append(X, X[:20000,:,:], axis = 0)
+    y = np.append(y, y[:20000,:], axis = 0)
+    '''
 
-    X = np.append(X, X[:2000,:,:], axis = 0)
-    y = np.append(y, y[:2000,:], axis = 0)
+    
 
     print("y.shape:", y.shape)
 
@@ -100,37 +111,11 @@ def count_output_data_hot_instances(y, i = ''):
             count_break += 1
 
         print("\nStraight:",count_straight, "\nLeft:",count_left, "\nRight:",count_right,  "\nAccelerate:",count_acc, "\nBreak:",count_break)
-
             
 
 
 
-def reshaped_history(x, history_length):
-
-    print("Shape of x", x.shape)
-    reshaped = np.empty((x.shape[0] - history_length + 1, x.shape[1], x.shape[2], history_length))
-    print("Shape of Reshaped", reshaped.shape)
-    #print("x:",x)
-
-    for index in range(x.shape[0] - history_length):
-        reshaped[index, :, :, :] = np.transpose(x[index: index + history_length, :, :, 0], (1, 2, 0))
-
-    return reshaped
-
-def reshaped_history_y(y, history_length):
-
-    print("Shape of y", y.shape)
-    reshaped = np.empty((y.shape[0] - history_length + 1, y.shape[1], history_length))
-    print("Shape of Reshaped", reshaped.shape)
-    #print("y:",y)
-
-    for index in range(y.shape[0] - history_length):
-        reshaped[index, :, :] = np.transpose(y[index: index + history_length,  0], ( 0))
-
-    return reshaped
-
-
-def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
+def preprocessing(X_train, y_train, history_length):
 
     # TODO: preprocess your data here.
     # 1. convert the images in X_train/X_valid to gray scale. If you use rgb2gray() from utils.py, the output shape (96, 96, 1)
@@ -145,56 +130,40 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
     '''SA'''
 
     X_train = rgb2gray(X_train)
-    X_train = np.expand_dims(X_train, axis=3)
-    X_valid = rgb2gray(X_valid)
-    X_valid = np.expand_dims(X_valid, axis=3)
+    X_train = np.expand_dims(X_train, axis=3) 
 
-    print("\n\n\n X_train[10]", X_train[10])
-    print("\n\n\n X_valid[10]", X_valid[10])
+    #print("\n\n\n X_train[9].shape", X_train[9].shape)
     
-    X_valid = X_valid.reshape(X_valid.shape[0], 96, 96)
-    
-    X_train = X_train.reshape(X_train.shape[0], 96, 96)
+    X_train = reshaped_history(X_train, history_length)    
 
-    print("\n\n\n X_train[10]", X_train[10])
-    print("\n\n\n X_valid[10]", X_valid[10])
+    #print("\n\n\n X_train[9].shape", X_train[9].shape)
     
     #y_train = y_train.astype('int32')
 
     y_train_id = np.zeros(y_train.shape[0], dtype = int)
-    y_valid_id = np.zeros(y_valid.shape[0], dtype = int)
 
 
     for i in range(X_train.shape[0]):
         y_train_id[i] = action_to_id(y_train[i])
 
-    for i in range(X_valid.shape[0]):
-        y_valid_id[i] = action_to_id(y_valid[i])
-
-
+ 
+    
+    '''
     for i in range(10):
         print("\n\ny_train[",i,"]:", y_train[i])
-        print("\n\ny_train_id[",i,"]:", y_train_id[i])
-        
-    y_train = one_hot(y_train_id)
-    y_valid = one_hot(y_valid_id)
+        print("y_train_id[",i,"]:", y_train_id[i])
     
-    print('... done loading data')
-
-    if history_length > 1 :
-        X_train = reshaped_history(X_train, history_length)
-        
-        
-        X_valid = reshaped_history(X_valid, history_length)
-        y_train = reshaped_history_y(y_train, history_length)
-        #print("Shape of y_train", y_train.shape)
-        #y_train[history_length:] = y_train[history_length - 1:]
-        y_valid = reshaped_history_y(y_valid, history_length)
-        #y_valid[history_length:] = y_valid[history_length - 1:]
+    print("\n\n\n")
+    '''
+    
+    y_train = one_hot(y_train_id)
+    
+    #print('... done loading data')
 
     '''SA'''
     
-    return X_train, y_train, X_valid, y_valid
+    return X_train, y_train
+
 
 
 
@@ -226,12 +195,16 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
                 X_train_mini = X_train[first_index : last_index, :, :]
                 y_train_mini = y_train[first_index : last_index, :]
 
+                X_train_mini, y_train_mini = preprocessing(X_train_mini, y_train_mini, history_length)
+                #print('... done loading training data')
+
                 opt, l = agent.sess.run([agent.optimizer, agent.loss], feed_dict = {agent.x_image: X_train_mini, agent.y_: y_train_mini})
                 _loss += l/(X_train.shape[0] //batch_size)
 
             train_accuracy = agent.accuracy.eval(feed_dict = {agent.x_image: X_train_mini, agent.y_: y_train_mini})
 
             print("\n\nPREDICTION:", agent.predict.eval(feed_dict={agent.x_image: X_train_mini}))
+            print('... training done')
             valid_accuracy = 0
 
             for i in range(X_valid.shape[0] // batch_size):
@@ -241,16 +214,30 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
                 X_valid_mini = X_valid[first_index : last_index, :, :]
                 y_valid_mini = y_valid[first_index : last_index, :]
 
+                X_valid_mini, y_valid_mini = preprocessing(X_valid_mini, y_valid_mini, history_length)
+                #print('... done loading validation data')
+
                 ac = agent.accuracy.eval(feed_dict={agent.x_image: X_valid_mini, agent.y_: y_valid_mini})
                 #print("ac:", ac)                    
                 valid_accuracy += ac /(X_valid.shape[0] //batch_size)
                 
-
+            print('... validation done')
             eval_dict = {"train":train_accuracy, "valid":valid_accuracy, "loss":_loss}
             tensorboard_eval.write_episode_data(epoch, eval_dict)
+            train_plot = []
+            train_plot.append(train_accuracy)
+            print("Epoch:",epoch+1, "Train accuracy:", train_accuracy, "validation accuracy:", valid_accuracy, "loss:", _loss)
 
-            print("Epoch:",epoch+1, "Train accuracy:", train_accuracy, "validation accuracy:", valid_accuracy, "loss:", _loss) 
-
+        '''
+        plt.plot(train_plot, label = str(train_plot))
+        plt.ylabel('Train Accuracy')
+        plt.xlabel('Epochs')
+        plt.title('Train Accuracy over epochs')
+        plt.legend()
+        plt.savefig('Training for history:'+ str(history_length) +'.png')
+        plt.close()
+        '''
+    
         save_path = os.path.join(model_dir, "agent.ckpt")
         agent.save(save_path)
 
@@ -270,22 +257,30 @@ if __name__ == "__main__":
 
     cmdline_parser.add_argument(
         '-l', '--history_length', default=1,
-        help='History Length', type=int)
-    args, unknowns = cmdline_parser.parse_known_args()
+        help='Number of states to be considered in the history for prediction', type=int)
+
+   cmdline_parser.add_argument(
+        '-n', '--n_minibatches', default=10,
+        help='Number of mini batches to be formed for training, basically the number of epochs', type=int)
+    args, unknowns = cmdline_parser.parse_known_args() 
 
     history_length = args.history_length
+    n_minibatches = args.n_minibatches
 
 
     # read data    
     X_train, y_train, X_valid, y_valid = read_data("./data")
 
     # preprocess data
-    X_train, y_train, X_valid, y_valid = preprocessing(X_train, y_train, X_valid, y_valid, history_length = history_length)
+
+    #X_train, y_train, X_valid, y_valid = preprocessing(X_train, y_train, X_valid, y_valid, history_length = history_length)
+    
     #count_output_data_hot_instances(y_train)
     #count_output_data_hot_instances(y_valid)
 
-    print("... preprocessing done")
+    print("... preprocessing to be done")
 
     # train model (you can change the parameters!)
-    train_model(X_train, y_train, X_valid, n_minibatches=10, batch_size=64, lr=0.01)
+    train_model(X_train, y_train, X_valid, n_minibatches, batch_size=64, lr=0.01)
  
+

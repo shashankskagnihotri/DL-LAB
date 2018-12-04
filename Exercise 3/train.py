@@ -50,14 +50,14 @@ def read_data(datasets_dir="./data", frac = 0.25):
     #print("Breaks changed: ", check)
 
     
-    for i in range(60000):
+    for i in range(35000):
         if all(y[i] == [0., 0. , 0.]):
-            if i > 25000:
+            if i > 17500:
                 continue
             X[j] = X[i]
             y[j] = [0., 1., 0.]
             
-            if i % 10 == 0 :
+            if i % 7 == 0 :
                 y[j] = [0., 0., 1.]                        
             
             j += 1
@@ -166,73 +166,6 @@ def preprocessing(X_train, y_train, history_length):
 
 
 
-'''
-def preprocessing(X_train, y_train, X_valid, y_valid, history_length):
-
-    # TODO: preprocess your data here.
-    # 1. convert the images in X_train/X_valid to gray scale. If you use rgb2gray() from utils.py, the output shape (96, 96, 1)
-    # 2. you can either train your model with continous actions (as you get them from read_data) using regression
-    #    or you discretize the action space using action_to_id() from utils.py. If you discretize them, you'll maybe find one_hot() 
-    #    useful and you may want to return X_train_unhot ... as well.
-
-    # History:
-    # At first you should only use the current image as input to your network to learn the next action. Then the input states
-    # have shape (96, 96,1). Later, add a history of the last N images to your state so that a state has shape (96, 96, N).
-
-
-    X_train = rgb2gray(X_train)
-    X_train = np.expand_dims(X_train, axis=3)
-    X_valid = rgb2gray(X_valid)
-    X_valid = np.expand_dims(X_valid, axis=3)
-
-    print("\n\n\n X_train[10]", X_train[10])
-    print("\n\n\n X_valid[10]", X_valid[10])
-    
-    X_valid = X_valid.reshape(X_valid.shape[0], 96, 96)
-    
-    X_train = X_train.reshape(X_train.shape[0], 96, 96)
-
-    print("\n\n\n X_train[10]", X_train[10])
-    print("\n\n\n X_valid[10]", X_valid[10])
-    
-    #y_train = y_train.astype('int32')
-
-    y_train_id = np.zeros(y_train.shape[0], dtype = int)
-    y_valid_id = np.zeros(y_valid.shape[0], dtype = int)
-
-
-    for i in range(X_train.shape[0]):
-        y_train_id[i] = action_to_id(y_train[i])
-
-    for i in range(X_valid.shape[0]):
-        y_valid_id[i] = action_to_id(y_valid[i])
-
-
-    for i in range(10000):
-        print("\n\ny_train[",i,"]:", y_train[i])
-        print("\n\ny_train_id[",i,"]:", y_train_id[i])
-        i += 103
-    y_train = one_hot(y_train_id)
-    y_valid = one_hot(y_valid_id)
-    
-    print('... done loading data')
-
-    if history_length > 1 :
-        X_train = reshaped_history(X_train, history_length)
-        
-        
-        X_valid = reshaped_history(X_valid, history_length)
-        y_train = reshaped_history_y(y_train, history_length)
-        #print("Shape of y_train", y_train.shape)
-        #y_train[history_length:] = y_train[history_length - 1:]
-        y_valid = reshaped_history_y(y_valid, history_length)
-        #y_valid[history_length:] = y_valid[history_length - 1:]
-
-    
-    return X_train, y_train, X_valid, y_valid
-'''
-
-
 
 def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_dir="./models", tensorboard_dir="./tensorboard"):
     
@@ -295,6 +228,7 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
             train_plot.append(train_accuracy)
             print("Epoch:",epoch+1, "Train accuracy:", train_accuracy, "validation accuracy:", valid_accuracy, "loss:", _loss)
 
+        '''
         plt.plot(train_plot, label = str(train_plot))
         plt.ylabel('Train Accuracy')
         plt.xlabel('Epochs')
@@ -302,7 +236,8 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
         plt.legend()
         plt.savefig('Training for history:'+ str(history_length) +'.png')
         plt.close()
-
+        '''
+    
         save_path = os.path.join(model_dir, "agent.ckpt")
         agent.save(save_path)
 
@@ -323,9 +258,14 @@ if __name__ == "__main__":
     cmdline_parser.add_argument(
         '-l', '--history_length', default=1,
         help='Number of states to be considered in the history for prediction', type=int)
-    args, unknowns = cmdline_parser.parse_known_args()
+
+   cmdline_parser.add_argument(
+        '-n', '--n_minibatches', default=10,
+        help='Number of mini batches to be formed for training, basically the number of epochs', type=int)
+    args, unknowns = cmdline_parser.parse_known_args() 
 
     history_length = args.history_length
+    n_minibatches = args.n_minibatches
 
 
     # read data    
@@ -341,5 +281,5 @@ if __name__ == "__main__":
     print("... preprocessing to be done")
 
     # train model (you can change the parameters!)
-    train_model(X_train, y_train, X_valid, n_minibatches=3, batch_size=64, lr=0.01)
+    train_model(X_train, y_train, X_valid, n_minibatches, batch_size=64, lr=0.01)
  

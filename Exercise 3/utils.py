@@ -12,14 +12,26 @@ def one_hot(labels):
     i.e. given y = [0,2,1]
      it creates y_one_hot = [[1,0,0], [0,0,1], [0,1,0]]
     """
-    classes = np.unique(labels)
-    n_classes = 5
     #print("n_classes: ", n_classes)
-    one_hot_labels = np.zeros(labels.shape + (n_classes,))
-    for c in classes:
-        one_hot_labels[labels == c, c] = 1.0
-        #print("labels: ", labels)
-        #print("one_hot_labels[",c,"]: ", one_hot_labels[c])
+    #one_hot_labels = np.zeros(labels.shape + (n_classes,))
+
+    one_hot_labels = np.array([], dtype = 'float64')
+    one_hot_labels = one_hot_labels.reshape((0,5))
+
+    for label in labels:
+        if label == LEFT:
+            one_hot_labels = np.append(one_hot_labels, [[0.0, 1.0, 0.0, 0.0, 0.0]], axis = 0)
+        elif label == RIGHT:
+            one_hot_labels = np.append(one_hot_labels, [[0.0, 0.0, 1.0, 0.0, 0.0]], axis = 0)
+        elif label == ACCELERATE:
+            one_hot_labels = np.append(one_hot_labels, [[0.0, 0.0, 0.0, 1.0, 0.0]], axis = 0)
+        elif label == BRAKE:
+            one_hot_labels = np.append(one_hot_labels, [[0.0, 1.0, 0.0, 0.0, 1.0]], axis = 0)
+        else:
+            one_hot_labels = np.append(one_hot_labels, [[1.0, 0.0, 0.0, 0.0, 0.0]], axis = 0)
+
+        #print("one_hot_labels:", one_hot_labels)
+    
     return one_hot_labels
 
 def one_hot_old(labels):
@@ -67,14 +79,14 @@ def id_to_action(id):
     elif id == ACCELERATE:
         return np.array([0.0, 1.0, 0.0])
     elif id == BRAKE:
-        return np.array([0.0, 0.0, np.float32(0.2)])
+        return np.array([0.0, 0.0, 1.0])
     else:
         return np.array([0.0, 0.0, 0.0])
 
 def reshaped_history(x, history_length):
 
     #print("Shape of x", x.shape)
-    reshaped = np.empty((x.shape[0] - history_length + 1, x.shape[1], x.shape[2], history_length))
+    reshaped = np.empty((x.shape[0], x.shape[1], x.shape[2], history_length))
     #print("Shape of Reshaped", reshaped.shape)
     #print("x:",x)
 

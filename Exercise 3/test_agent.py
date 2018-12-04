@@ -15,7 +15,7 @@ from model import Model
 from utils import *
 
 
-def run_episode(env, agent, rendering=True, max_timesteps=1000, history_length = 1):
+def run_episode(env, agent, history_length, rendering=True, max_timesteps=1000):
     
     episode_reward = 0
     step = 0
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     episode_rewards = []
     for i in range(n_test_episodes):
-        episode_reward = run_episode(env, agent, rendering=rendering)
+        episode_reward = run_episode(env, agent, history_length, rendering=rendering)
         episode_rewards.append(episode_reward)
 
     # save results in a dictionary and write them into a .json file

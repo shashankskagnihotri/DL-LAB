@@ -64,12 +64,17 @@ def action_to_id(a):
     this method discretizes the actions.
     Important: this method only works if you recorded data pressing only one key at a time!
     """
-    if any(a == [-1.0, 0.0, 0.0]): return LEFT               # LEFT: 1
-    elif any(a == [1.0, 0.0, 0.0]): return RIGHT             # RIGHT: 2
-    elif any(a == [0.0, 1.0, 0.0]): return ACCELERATE        # ACCELERATE: 3
-    elif any(a == [0.0, 0.0, 1.0]): return BRAKE             # BRAKE: 4
+    if all(a == [-1.0, 0.0, 0.0]): return LEFT               # LEFT : 1
+    elif all(a == [-1.0, 1.0, 0.0]): return LEFT             # LEFT : 1
+    elif all(a == [1.0, 0.0, 0.0]): return RIGHT             # RIGHT: 2
+    elif all(a == [1.0, 1.0, 0.0]): return RIGHT             # RIGHT: 2
+    elif all(a == [0.0, 1.0, 0.0]): return ACCELERATE        # ACCELERATE: 3
+    elif all(a == [0.0, 0.0, 1.0]): return BRAKE             # BRAKE: 4
+    elif all(a == [-1.0, 0.0, 1.0]): return BREAK            # BREAK: 4
+    elif all(a == [1.0, 0.0, 1.0]): return BREAK             # BREAK: 4
+    elif all(a == [0.0, 0.0, 0.0]): return STRAIGHT          # STRAIGHT: 0
     else:       
-        return STRAIGHT                                      # STRAIGHT = 0
+        return ACCELERATE                                    # ACCELERATE : 3
 
 def id_to_action(id):
     if id == LEFT:

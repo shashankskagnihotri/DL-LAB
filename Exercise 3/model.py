@@ -11,25 +11,25 @@ class Model:
         #num_filters = 15
         #filter_size = 5
         with tf.name_scope("inputs"):
-            self.x_image = tf.placeholder(tf.float32, shape=[None,96,96], name = "x_image")
+            self.x_image = tf.placeholder(tf.float32, shape=[None,96,96, history_length], name = "x_image")
             reshape_x = tf.reshape(self.x_image, shape = [-1, 96, 96, history_length], name = "reshape_x")
-            self.y_ = tf.placeholder(tf.float32, shape=[None, 4], name = "y_")
+            self.y_ = tf.placeholder(tf.float32, shape=[None, 5], name = "y_")
         #y_conv = tf.placeholder(tf.float32, shape=[None, 10], name= 'y_conv')
 
         # first layers
-        self.W_conv1 = tf.get_variable("W_conv1", [8, 8, history_length, 64], initializer=tf.contrib.layers.xavier_initializer())
+        self.W_conv1 = tf.get_variable("W_conv1", [8, 8, history_length, batch_size], initializer=tf.contrib.layers.xavier_initializer())
         conv1 = tf.nn.conv2d(reshape_x, self.W_conv1, strides=[1, 2, 2, 1], padding='VALID')
         conv1_a = tf.nn.relu(conv1)
         pool1 = self.max_pool_2x2(conv1_a)
 
         # second layer
-        self.W_conv2 = tf.get_variable("W_conv2", [4, 4, 64, 64], initializer=tf.contrib.layers.xavier_initializer())
+        self.W_conv2 = tf.get_variable("W_conv2", [4, 4, batch_size, batch_size], initializer=tf.contrib.layers.xavier_initializer())
         conv2 = tf.nn.conv2d(pool1, self.W_conv2, strides=[1, 2, 2, 1], padding='VALID')
         conv2_a = tf.nn.sigmoid(conv2)
         pool2 = self.max_pool_2x2(conv2_a)
 
         # third layer
-        self.W_conv3 = tf.get_variable("W_conv3", [3, 3, 64, 64], initializer=tf.contrib.layers.xavier_initializer())
+        self.W_conv3 = tf.get_variable("W_conv3", [3, 3, batch_size, batch_size], initializer=tf.contrib.layers.xavier_initializer())
         conv3 = tf.nn.conv2d(pool2, self.W_conv3, strides=[1, 2, 2, 1], padding='VALID')
         conv3_a = tf.nn.relu(conv3)
         pool3 = self.max_pool_2x2(conv3_a)
@@ -53,11 +53,11 @@ class Model:
         flatten = tf.reshape(pool3, shape = [-1, 1*8*8])
 
         fc1 = tf.contrib.layers.fully_connected(flatten, 1024, activation_fn=tf.nn.relu)
-        fc2 = tf.layers.dense(fc1, 1024, activation = tf.nn.sigmoid, name = "fc2")
+        fc2 = tf.layers.dense(fc1, 400, activation = tf.nn.sigmoid, name = "fc2")
         
 
         with tf.name_scope("output"):
-            self.logits = tf.layers.dense(fc2, 4, name = "output")
+            self.logits = tf.layers.dense(fc2, 5, name = "output")
             y_pred = tf.nn.softmax(self.logits, name = "y_pred")
             self.predict = tf.argmax(self.logits, 1)
             #print("\n\nPREDICTION:", self.predict)
@@ -69,6 +69,7 @@ class Model:
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.y_)
             self.loss = tf.reduce_mean(cross_entropy)
             self.optimizer = tf.train.GradientDescentOptimizer(lr).minimize(self.loss)
+            
             
         with tf.name_scope("eval"):
             self.prediction = tf.equal(tf.argmax(self.logits, 1), tf.argmax(self.y_, 1))

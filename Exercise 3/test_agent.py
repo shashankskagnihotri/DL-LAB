@@ -6,6 +6,8 @@ import gym
 import os
 import json
 
+import argparse
+
 from scipy.misc import toimage
 
 
@@ -96,18 +98,26 @@ def run_episode(env, agent, rendering=True, max_timesteps=1000, history_length =
 
             #state = state.reshape(state.shape[0], 96, 1)
 
+            print("state.shape", state.shape)
+
+            '''
+            _history = np.zeros((1, state.shape[1], state.shape[1], history_length))
+            _history[0:,:,:,:] = state
+            '''
+
+            state = reshaped_history(state, history_length)
+
             #print("state.shape", state.shape)
-            #_history = np.zeros((1, state.shape[1], state.shape[1], history_length))
-            #_history[0:,:,:,:0] = state
 
             #print("\n\nstate:", state)
 
             #prediction = agent.predict.eval(feed_dict={agent.x_image: state})[0]
                                             
-            
-            if count < 2 :
+        
+            if count < 3 :
                 prediction = 3
                 count += 1
+        
             else:
                 prediction = agent.predict.eval(feed_dict={agent.x_image: state})[0]
                 count += 1
@@ -153,7 +163,15 @@ if __name__ == "__main__":
     
     n_test_episodes = 15                  # number of episodes to test
 
-    history_length = 1
+    cmdline_parser = argparse.ArgumentParser('exercise3_R_NR')
+
+
+    cmdline_parser.add_argument(
+        '-l', '--history_length', default=1,
+        help='History Length', type=int)
+    args, unknowns = cmdline_parser.parse_known_args()
+
+    history_length = args.history_length
     
     # TODO: load agent
     agent = Model(history_length = history_length)

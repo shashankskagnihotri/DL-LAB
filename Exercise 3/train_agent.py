@@ -34,6 +34,15 @@ def read_data(datasets_dir="./data", frac = 0.25):
 
     j = 0
 
+    check = False
+
+    for i in range(34999):
+        if all(y[i] == [0., 0. , np.float32(0.2)]):
+            y[i] = [0., 0., 1.]
+            check = True
+
+    print("Breaks changed: ", check)
+
 
     for i in range(30000):
         if all(y[i] == [0., 0. , 0.]):
@@ -42,15 +51,15 @@ def read_data(datasets_dir="./data", frac = 0.25):
             X[j] = X[i]
             y[j] = [0., 1., 0.]
             if i % 4 == 0 :
-                y[j] = [0., 0., 0.2]    
+                y[j] = [0., 0., 1.]    
             j += 1
         else:
             X[j] = X[i]
             y[j] = y[i]
             j += 1
 
-    X = np.append(X, X[:5000,:,:], axis = 0)
-    y = np.append(y, y[:5000,:], axis = 0)
+    X = np.append(X, X[:2000,:,:], axis = 0)
+    y = np.append(y, y[:2000,:], axis = 0)
 
     print("y.shape:", y.shape)
 
@@ -163,10 +172,10 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
         y_valid_id[i] = action_to_id(y_valid[i])
 
 
-    for i in range(10000):
+    for i in range(10):
         print("\n\ny_train[",i,"]:", y_train[i])
         print("\n\ny_train_id[",i,"]:", y_train_id[i])
-        i += 103
+        
     y_train = one_hot(y_train_id)
     y_valid = one_hot(y_valid_id)
     
@@ -278,5 +287,5 @@ if __name__ == "__main__":
     print("... preprocessing done")
 
     # train model (you can change the parameters!)
-    train_model(X_train, y_train, X_valid, n_minibatches=100, batch_size=64, lr=0.01)
+    train_model(X_train, y_train, X_valid, n_minibatches=10, batch_size=64, lr=0.01)
  

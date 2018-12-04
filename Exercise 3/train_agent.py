@@ -201,7 +201,7 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
                 opt, l = agent.sess.run([agent.optimizer, agent.loss], feed_dict = {agent.x_image: X_train_mini, agent.y_: y_train_mini})
                 _loss += l/(X_train.shape[0] //batch_size)
 
-                #print("\n\nPREDICTION:", agent.predict.eval(feed_dict={agent.x_image: X_train_mini}))
+            print("\n\nPREDICTION:", agent.predict.eval(feed_dict={agent.x_image: X_train_mini}))
 
             train_accuracy = agent.accuracy.eval(feed_dict = {agent.x_image: X_train_mini, agent.y_: y_train_mini})
 

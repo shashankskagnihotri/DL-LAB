@@ -42,12 +42,12 @@ def one_hot(labels):
     """
     classes = np.unique(labels)
     n_classes = 5
-    print("n_classes: ", n_classes)
+    #print("n_classes: ", n_classes)
     one_hot_labels = np.zeros(labels.shape + (n_classes,))
     for c in classes:
         one_hot_labels[labels == c, c] = 1.0
-        print("labels: ", labels)
-        print("one_hot_labels[",c,"]: ", one_hot_labels[c])
+        #print("labels: ", labels)
+        #print("one_hot_labels[",c,"]: ", one_hot_labels[c])
     return one_hot_labels
     
 

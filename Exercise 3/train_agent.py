@@ -188,7 +188,7 @@ def preprocessing(X_train, y_train, history_length):
     print("\n\n\n")
     '''
     
-    y_train = one_hot_new(y_train_id)
+    y_train = one_hot(y_train_id)
     
     #print('... done loading data')
 
@@ -199,13 +199,16 @@ def preprocessing(X_train, y_train, history_length):
 
 
 
-def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_dir="./models", tensorboard_dir="./tensorboard"):
+def train_model(X_train, y_train, X_valid, n_minibatches, file, batch_size, lr, model_dir="./models", tensorboard_dir="./tensorboard"):
     
     # create result and model folders
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)  
  
     print("... train model")
+
+    
+    
 
 
     tensorboard_eval = Evaluation(tensorboard_dir)
@@ -258,8 +261,9 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
             print('... validation done')
             eval_dict = {"train":train_accuracy, "valid":valid_accuracy, "loss":_loss}
             tensorboard_eval.write_episode_data(epoch, eval_dict)
-            train_plot = []
-            train_plot.append(train_accuracy)
+            #train_plot = []
+            #train_plot.append(train_accuracy)
+            file.write(str(train_accuracy))
             print("Epoch:",epoch+1, "Train accuracy:", train_accuracy, "validation accuracy:", valid_accuracy, "loss:", _loss)
 
         '''
@@ -278,6 +282,7 @@ def train_model(X_train, y_train, X_valid, n_minibatches, batch_size, lr, model_
     tensorboard_eval.close_session()
     print("Model saved in file: %s" % model_dir)
 
+    agent.sess.close()
     
    
 
@@ -294,7 +299,7 @@ if __name__ == "__main__":
         help='Number of states to be considered in the history for prediction', type=int)
 
     cmdline_parser.add_argument(
-        '-n', '--n_minibatches', default=10,
+        '-n', '--n_minibatches', default=5,
         help='Number of mini batches to be formed for training, basically the number of epochs', type=int)
     args, unknowns = cmdline_parser.parse_known_args() 
 
@@ -315,5 +320,8 @@ if __name__ == "__main__":
     print("... preprocessing to be done")
 
     # train model (you can change the parameters!)
-    train_model(X_train, y_train, X_valid, n_minibatches, batch_size=64, lr=0.01)
+    file_name = "Accuracy for History_" + str(history_length) + " Epochs_" + str(n_minibatches)
+    file = open(file_name, "w")
+    train_model(X_train, y_train, X_valid, n_minibatches, file, batch_size=64, lr=0.01)
+    file.close()
  

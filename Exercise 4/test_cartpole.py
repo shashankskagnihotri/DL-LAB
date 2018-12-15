@@ -15,6 +15,12 @@ if __name__ == "__main__":
 
     # TODO: load DQN agent
     # ...
+
+    # 1. init Q network and target network (see dqn/networks.py)
+    Q = NeuralNetwork(state_dim = 4, num_actions = 4)
+    Q_target = TargetNetwork(state_dim = 4, num_actions = 4)
+    # 2. init DQNAgent (see dqn/dqn_agent.py)
+    agent = DQNAgent(Q, Q_target, 4)
  
     n_test_episodes = 15
 

@@ -10,8 +10,9 @@ from dqn.networks import CNN, CNNTargetNetwork
 from tensorboard_evaluation import *
 import itertools as it
 from utils import *
+import argparse
 
-def run_episode(env, agent, deterministic, skip_frames=0,  do_training=True, rendering=False, max_timesteps=1000, history_length=0):
+def run_episode(env, agent, deterministic, skip_frames=0,  do_training=True, rendering=True, max_timesteps=1000, history_length=0):
     """
     This methods runs one episode for a gym environment. 
     deterministic == True => agent executes only greedy actions according the Q function approximator (no random actions).
@@ -75,7 +76,7 @@ def run_episode(env, agent, deterministic, skip_frames=0,  do_training=True, ren
     return stats
 
 
-def train_online(env, agent, num_episodes, history_length=0, model_dir="./models_carracing", tensorboard_dir="./tensorboard"):
+def train_online(env, agent, num_episodes, skip_frames, max_timesteps, history_length=3, model_dir="./models_carracing", tensorboard_dir="./tensorboard"):
    
     if not os.path.exists(model_dir):
         os.mkdir(model_dir)  
@@ -84,7 +85,7 @@ def train_online(env, agent, num_episodes, history_length=0, model_dir="./models
     tensorboard = Evaluation(os.path.join(tensorboard_dir, "train"), ["episode_reward", "straight", "left", "right", "accel", "brake"])
 
     for i in range(num_episodes):
-        print("epsiode %d" % i)
+        print("\n\nepsiode %d" % i)
 
         # Hint: you can keep the episodes short in the beginning by changing max_timesteps (otherwise the car will spend most of the time out of the track)
        
@@ -97,6 +98,7 @@ def train_online(env, agent, num_episodes, history_length=0, model_dir="./models
                                                       "accel" : stats.get_action_usage(ACCELERATE),
                                                       "brake" : stats.get_action_usage(BRAKE)
                                                       })
+        print("Episode Reward:", stats.episode_reward)
 
         # TODO: evaluate agent with deterministic actions from time to time
         # ...
@@ -120,7 +122,7 @@ if __name__ == "__main__":
 
 
     cmdline_parser.add_argument(
-        '-h', '--history_length', default=3,
+        '-l', '--history_length', default=3,
         help='Number of states to be considered in the history for prediction', type=int)
 
     cmdline_parser.add_argument(
@@ -132,7 +134,7 @@ if __name__ == "__main__":
         help='Number of frames to skip', type=int)
 
     cmdline_parser.add_argument(
-        '-m', '--max_timesteps', default=5000,
+        '-m', '--max_timesteps', default=300,
         help='Number of frames to skip', type=int)
     
     args, unknowns = cmdline_parser.parse_known_args()
@@ -151,5 +153,5 @@ if __name__ == "__main__":
     Q_target = CNNTargetNetwork(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
     agent = DQNAgent(Q, Q_target, num_actions, discount_factor=0.99, batch_size=64, epsilon=0.05)
     
-    train_online(env, agent, num_episodes=1000, skip_frames = skip_frames, max_timesteps = max_timesteps, history_length = history_length, model_dir="./models_carracing")
+    train_online(env, agent, num_episodes=700, skip_frames = skip_frames, max_timesteps = max_timesteps, history_length = history_length, model_dir="./models_carracing")
 

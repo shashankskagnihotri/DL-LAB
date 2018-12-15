@@ -94,34 +94,81 @@ class CNN():
     def __init__(self, state_dim, num_actions, history_length = 3, hidden = 256, lr = 1e-3):
         self._build_model(state_dim, num_actions, history_length, hidden, lr)
 
-    def conv2d(x, W):
+    def conv2d(self, x, W):
         return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
 
-    def max_pool_2x2(x):
+    def max_pool_2x2(self, x):
         return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
 
     def _build_model(self, state_dim, num_actions, history_length, hidden, lr):
-        self.states_ = tf.placeholder(tf.float32, shape=[None, *state_dim, history_length+1])
+        self.states_ = tf.placeholder(tf.float32, shape=[None, *state_dim, history_length+1], name="states")
         self.actions_ = tf.placeholder(tf.int32, shape=[None])
         self.targets_ = tf.placeholder(tf.float32, shape=[None])
 
+
+        fc1_size = 512
+        fc2_size = 128
+
+        mu = 0
+        sigma = 0.1
+
+        # filter sizes
+        fs1, fs2, fs3 = (7,5,3)
+
+        #filter counts
+        nf1, nf2, nf3 = (16, 32, 48)
+
+        # first conv layer
+        conv1_w = tf.Variable(tf.truncated_normal(shape=[fs1, fs1, history_length +1 , nf1], mean=mu, stddev=sigma), name="w1")
+        conv1_b = tf.Variable(tf.zeros(nf1), name="b1")
+        conv1 = tf.nn.conv2d(self.states_, conv1_w, strides=[1, 1, 1, 1], padding='SAME') + conv1_b
+        conv1 = tf.nn.relu(conv1)
+        pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+        # second conv layer
+        conv2_w = tf.Variable(tf.truncated_normal(shape=[fs2, fs2, nf1, nf2], mean=mu, stddev=sigma), name="w2")
+        conv2_b = tf.Variable(tf.zeros(nf2), name="b2")
+        conv2 = tf.nn.conv2d(pool1, conv2_w, strides=[1, 1, 1, 1], padding='SAME') + conv2_b
+        conv2 = tf.nn.relu(conv2)
+        pool2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+        # third conv layer
+        conv3_w = tf.Variable(tf.truncated_normal(shape=[fs3, fs3, nf2, nf3], mean=mu, stddev=sigma), name="w3")
+        conv3_b = tf.Variable(tf.zeros(nf3), name="b3")
+        conv3 = tf.nn.conv2d(pool2, conv3_w, strides=[1, 1, 1, 1], padding='SAME') + conv3_b
+        conv3 = tf.nn.relu(conv3)
+        pool3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+        # flatten
+        shape = pool3.get_shape().as_list()
+        dim = np.prod(shape[1:])
+        flat = tf.reshape(pool3, [-1, dim])
+
+        # network
+        fc1 = tf.layers.dense(flat, fc1_size, tf.nn.relu)
+        fc2 = tf.layers.dense(fc1, fc2_size, tf.nn.relu)
+
+        self.predictions = tf.layers.dense(fc2, num_actions)
+
+        """
+
         # first layers
-        W_conv1 = tf.get_variable("W_conv1", [8, 8, history_length, 64], initializer=tf.contrib.layers.xavier_initializer())
-        conv1 = tf.nn.conv2d(reshape_x, W_conv1, strides=[1, 2, 2, 1], padding='VALID')
+        W_conv1 = tf.get_variable("W_conv1", [8, 8, history_length+1, 64], initializer=tf.contrib.layers.xavier_initializer())
+        conv1 = tf.nn.conv2d(self.states_, W_conv1, strides=[1, 2, 2, 1], padding='VALID')
         conv1_a = tf.nn.relu(conv1)
-        pool1 = max_pool_2x2(conv1_a)
+        pool1 = self.max_pool_2x2(conv1_a)
 
         # second layer
         W_conv2 = tf.get_variable("W_conv2", [4, 4, 64, 64], initializer=tf.contrib.layers.xavier_initializer())
         conv2 = tf.nn.conv2d(pool1, W_conv2, strides=[1, 2, 2, 1], padding='VALID')
         conv2_a = tf.nn.sigmoid(conv2)
-        pool2 = max_pool_2x2(conv2_a)
+        pool2 = self.max_pool_2x2(conv2_a)
 
         # third layer
         W_conv3 = tf.get_variable("W_conv3", [3, 3, 64, 64], initializer=tf.contrib.layers.xavier_initializer())
         conv3 = tf.nn.conv2d(pool2, W_conv3, strides=[1, 2, 2, 1], padding='VALID')
         conv3_a = tf.nn.relu(conv3)
-        pool3 = max_pool_2x2(conv3_a)
+        pool3 = self.max_pool_2x2(conv3_a)
 
         flatten = tf.reshape(pool3, shape = [-1, 1*8*8])
 
@@ -132,7 +179,9 @@ class CNN():
         
         self.predictions = tf.layers.dense(fc3, num_actions)
 
-         # Get the predictions for the chosen actions only
+        """
+
+        # Get the predictions for the chosen actions only
         batch_size = tf.shape(self.states_)[0]
         gather_indices = tf.range(batch_size) * tf.shape(self.predictions)[1] + self.actions_
         self.action_predictions = tf.gather(tf.reshape(self.predictions, [-1]), gather_indices)
@@ -145,32 +194,32 @@ class CNN():
         self.optimizer = tf.train.GradientDescentOptimizer(lr)
         self.train_op = self.optimizer.minimize(self.loss)
 
-        def predict(self, sess, states):
-            """
-            Args:
-              sess: TensorFlow session
-              states: array of states for which we want to predict the actions.
-            Returns:
-              The prediction of the output tensor.
-            """
-            prediction = sess.run(self.predictions, { self.states_: states })
-            return prediction
+    def predict(self, sess, states):
+        """
+        Args:
+          sess: TensorFlow session
+          states: array of states for which we want to predict the actions.
+        Returns:
+          The prediction of the output tensor.
+        """
+        prediction = sess.run(self.predictions, { self.states_: states })
+        return prediction
 
 
-        def update(self, sess, states, actions, targets):
-            """
-            Updates the weights of the neural network, based on its targets, its
-            predictions, its loss and its optimizer.
-            
-            Args:
-              sess: TensorFlow session.
-              states: [current_state] or states of batch
-              actions: [current_action] or actions of batch
-              targets: [current_target] or targets of batch
-            """
-            feed_dict = { self.states_: states, self.targets_: targets, self.actions_: actions}
-            _, loss = sess.run([self.train_op, self.loss], feed_dict)
-            return loss
+    def update(self, sess, states, actions, targets):
+        """
+        Updates the weights of the neural network, based on its targets, its
+        predictions, its loss and its optimizer.
+        
+        Args:
+          sess: TensorFlow session.
+          states: [current_state] or states of batch
+          actions: [current_action] or actions of batch
+          targets: [current_target] or targets of batch
+        """
+        feed_dict = { self.states_: states, self.targets_: targets, self.actions_: actions}
+        _, loss = sess.run([self.train_op, self.loss], feed_dict)
+        return loss
         
         
         

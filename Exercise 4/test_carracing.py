@@ -5,6 +5,7 @@ from dqn.agent import DQNAgent
 from train_carracingimport run_episode
 from dqn.networks import *
 import numpy as np
+import argparse
 
 np.random.seed(0)
 
@@ -21,7 +22,7 @@ if __name__ == "__main__":
 
 
     cmdline_parser.add_argument(
-        '-h', '--history_length', default=3,
+        '-l', '--history_length', default=3,
         help='Number of states to be considered in the history for prediction', type=int)
 
     cmdline_parser.add_argument(

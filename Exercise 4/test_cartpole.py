@@ -17,12 +17,12 @@ if __name__ == "__main__":
     # ...
 
     # 1. init Q network and target network (see dqn/networks.py)
-    Q = NeuralNetwork(state_dim = 4, num_actions = 4)
-    Q_target = TargetNetwork(state_dim = 4, num_actions = 4)
+    Q = NeuralNetwork(state_dim = 4, num_actions = 2)
+    Q_target = TargetNetwork(state_dim = 4, num_actions = 2)
     # 2. init DQNAgent (see dqn/dqn_agent.py)
-    agent = DQNAgent(Q, Q_target, 4)
+    agent = DQNAgent(Q, Q_target, 2)
  
-    n_test_episodes = 15
+    n_test_episodes = 50
 
     episode_rewards = []
     for i in range(n_test_episodes):
@@ -34,6 +34,7 @@ if __name__ == "__main__":
     results["episode_rewards"] = episode_rewards
     results["mean"] = np.array(episode_rewards).mean()
     results["std"] = np.array(episode_rewards).std()
+    print(results)
  
     if not os.path.exists("./results"):
         os.mkdir("./results")  

@@ -9,7 +9,7 @@ from dqn.dqn_agent import DQNAgent
 from dqn.networks import CNN, CNNTargetNetwork
 from tensorboard_evaluation import *
 import itertools as it
-from utils import EpisodeStats
+from utils import *
 
 def run_episode(env, agent, deterministic, skip_frames=0,  do_training=True, rendering=False, max_timesteps=1000, history_length=0):
     """
@@ -39,7 +39,9 @@ def run_episode(env, agent, deterministic, skip_frames=0,  do_training=True, ren
         # TODO: get action_id from agent
         # Hint: adapt the probabilities of the 5 actions for random sampling so that the agent explores properly. 
         # action_id = agent.act(...)
+        action_id = agent.act(state = state, deterministic = deterministic)
         # action = your_id_to_action_method(...)
+        action = id_to_action(action_id)
 
         # Hint: frame skipping might help you to get better results.
         reward = 0
@@ -86,7 +88,7 @@ def train_online(env, agent, num_episodes, history_length=0, model_dir="./models
 
         # Hint: you can keep the episodes short in the beginning by changing max_timesteps (otherwise the car will spend most of the time out of the track)
        
-        stats = run_episode(env, agent, max_timesteps=max_timesteps, deterministic=False, do_training=True)
+        stats = run_episode(env, agent, history_length = history_length, skip_frames = skip_frames, max_timesteps=max_timesteps, deterministic=False, do_training=True)
 
         tensorboard.write_episode_data(i, eval_dict={ "episode_reward" : stats.episode_reward, 
                                                       "straight" : stats.get_action_usage(STRAIGHT),
@@ -113,6 +115,41 @@ if __name__ == "__main__":
     
     # TODO: Define Q network, target network and DQN agent
     # ...
+
+    cmdline_parser = argparse.ArgumentParser('Exercise 4')
+
+
+    cmdline_parser.add_argument(
+        '-l', '--history_length', default=3,
+        help='Number of states to be considered in the history for prediction', type=int)
+
+    cmdline_parser.add_argument(
+        '-n', '--num_actions', default=5,
+        help='Number of Actions', type=int)
+
+    cmdline_parser.add_argument(
+        '-s', '--skip_frames', default=5,
+        help='Number of frames to skip', type=int)
+
+    cmdline_parser.add_argument(
+        '-m', '--max_timesteps', default=5000,
+        help='Number of frames to skip', type=int)
     
-    train_online(env, agent, num_episodes=1000, history_length=0, model_dir="./models_carracing")
+    args, unknowns = cmdline_parser.parse_known_args()
+
+    
+
+    history_length = args.history_length
+    num_actions = args.num_actions
+    skip_frames = args.skip_frames
+    max_timesteps = args.max_timesteps
+
+    state_dim = (96, 96)
+
+    
+    Q = CNN(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
+    Q_target = CNNTargetNetwork(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
+    agent = DQNAgent(Q, Q_target, num_actions, discount_factor=0.99, batch_size=64, epsilon=0.05)
+    
+    train_online(env, agent, num_episodes=1000, skip_frames = skip_frames, max_timesteps = max_timesteps, history_length = history_length, model_dir="./models_carracing")
 

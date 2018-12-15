@@ -65,6 +65,7 @@ def train_online(env, agent, num_episodes, model_dir="./models_cartpole", tensor
             valid_episode_reward += _stats.episode_reward
             tensorboard.write_episode_data(i, eval_dict={"episode_reward" : stats.episode_reward, "valid_episode_reward" : valid_episode_reward, "a_0" : stats.get_action_usage(0), "a_1" : stats.get_action_usage(1)})
             agent.saver.save(agent.sess, os.path.join(model_dir, "dqn_agent.ckpt"))
+        print("episode_reward: ", stats.episode_reward)
    
     tensorboard.close_session()
 
@@ -84,5 +85,5 @@ if __name__ == "__main__":
     # 2. init DQNAgent (see dqn/dqn_agent.py)
     agent = DQNAgent(Q, Q_target, 2)
     # 3. train DQN agent with train_online(...)
-    train_online(env, agent, 5000)
+    train_online(env, agent, 1000)
  

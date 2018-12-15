@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
 
     cmdline_parser.add_argument(
-        '-l', '--history_length', default=3,
+        '-h', '--history_length', default=3,
         help='Number of states to be considered in the history for prediction', type=int)
 
     cmdline_parser.add_argument(

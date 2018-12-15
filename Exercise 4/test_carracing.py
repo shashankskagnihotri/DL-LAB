@@ -12,10 +12,41 @@ if __name__ == "__main__":
 
     env = gym.make("CarRacing-v0").unwrapped
 
-    history_length =  0
+    #history_length =  3
 
     #TODO: Define networks and load agent
     # ....
+    state_dim = (96, 96)
+    cmdline_parser = argparse.ArgumentParser('Exercise 4')
+
+
+    cmdline_parser.add_argument(
+        '-h', '--history_length', default=3,
+        help='Number of states to be considered in the history for prediction', type=int)
+
+    cmdline_parser.add_argument(
+        '-n', '--num_actions', default=5,
+        help='Number of Actions', type=int)
+
+    cmdline_parser.add_argument(
+        '-s', '--skip_frames', default=5,
+        help='Number of frames to skip', type=int)
+
+    
+    args, unknowns = cmdline_parser.parse_known_args()
+
+    
+
+    history_length = args.history_length
+    num_actions = args.num_actions
+    skip_frames = args.skip_frames
+
+    Q = CNN(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
+    Q_target = CNNTargetNetwork(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
+    agent = DQNAgent(Q, Q_target, num_actions, discount_factor=0.99, batch_size=64, epsilon=0.05)
+    agent.load("./models_carracing/dqn_agent.ckpt"
+
+    
 
     n_test_episodes = 15
 

@@ -130,7 +130,7 @@ if __name__ == "__main__":
         help='Number of Actions', type=int)
 
     cmdline_parser.add_argument(
-        '-s', '--skip_frames', default=5,
+        '-s', '--skip_frames', default=2,
         help='Number of frames to skip', type=int)
 
     cmdline_parser.add_argument(

@@ -29,10 +29,6 @@ if __name__ == "__main__":
         '-n', '--num_actions', default=5,
         help='Number of Actions', type=int)
 
-    cmdline_parser.add_argument(
-        '-s', '--skip_frames', default=5,
-        help='Number of frames to skip', type=int)
-
     
     args, unknowns = cmdline_parser.parse_known_args()
 
@@ -40,7 +36,6 @@ if __name__ == "__main__":
 
     history_length = args.history_length
     num_actions = args.num_actions
-    skip_frames = args.skip_frames
 
     Q = CNN(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
     Q_target = CNNTargetNetwork(state_dim, num_actions, history_length, hidden=256, lr=1e-3)

@@ -91,7 +91,7 @@ class TargetNetwork(NeuralNetwork):
           sess.run(op)
 
 class CNN():
-    def __init__(self, state_dim, num_actions, history_length = 3, hidden = 256, lr = 1e-3):
+    def __init__(self, state_dim, num_actions, history_length = 3, hidden = 256, lr = 0.002):
         self._build_model(state_dim, num_actions, history_length, hidden, lr)
 
     def conv2d(self, x, W):
@@ -106,35 +106,25 @@ class CNN():
         self.targets_ = tf.placeholder(tf.float32, shape=[None])
 
 
-        fc1_size = 512
-        fc2_size = 128
 
-        mu = 0
-        sigma = 0.1
 
-        # filter sizes
-        fs1, fs2, fs3 = (7,5,3)
-
-        #filter counts
-        nf1, nf2, nf3 = (16, 32, 48)
-
-        # first conv layer
-        conv1_w = tf.Variable(tf.truncated_normal(shape=[fs1, fs1, history_length +1 , nf1], mean=mu, stddev=sigma), name="w1")
-        conv1_b = tf.Variable(tf.zeros(nf1), name="b1")
+        # first layer
+        conv1_w = tf.Variable(tf.truncated_normal(shape=[8, 8, history_length +1 , 16], mean=0, stddev=0.1), name="w1")
+        conv1_b = tf.Variable(tf.zeros(16), name="b1")
         conv1 = tf.nn.conv2d(self.states_, conv1_w, strides=[1, 1, 1, 1], padding='SAME') + conv1_b
         conv1 = tf.nn.relu(conv1)
         pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        # second conv layer
-        conv2_w = tf.Variable(tf.truncated_normal(shape=[fs2, fs2, nf1, nf2], mean=mu, stddev=sigma), name="w2")
-        conv2_b = tf.Variable(tf.zeros(nf2), name="b2")
+        # second layer
+        conv2_w = tf.Variable(tf.truncated_normal(shape=[4, 4, 16, 32], mean=0, stddev=0.1), name="w2")
+        conv2_b = tf.Variable(tf.zeros(32), name="b2")
         conv2 = tf.nn.conv2d(pool1, conv2_w, strides=[1, 1, 1, 1], padding='SAME') + conv2_b
-        conv2 = tf.nn.relu(conv2)
+        conv2 = tf.nn.sigmoid(conv2)
         pool2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        # third conv layer
-        conv3_w = tf.Variable(tf.truncated_normal(shape=[fs3, fs3, nf2, nf3], mean=mu, stddev=sigma), name="w3")
-        conv3_b = tf.Variable(tf.zeros(nf3), name="b3")
+        # third layer
+        conv3_w = tf.Variable(tf.truncated_normal(shape=[3, 3, 32, 16], mean=0, stddev=0.1), name="w3")
+        conv3_b = tf.Variable(tf.zeros(16), name="b3")
         conv3 = tf.nn.conv2d(pool2, conv3_w, strides=[1, 1, 1, 1], padding='SAME') + conv3_b
         conv3 = tf.nn.relu(conv3)
         pool3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
@@ -145,8 +135,8 @@ class CNN():
         flat = tf.reshape(pool3, [-1, dim])
 
         # network
-        fc1 = tf.layers.dense(flat, fc1_size, tf.nn.relu)
-        fc2 = tf.layers.dense(fc1, fc2_size, tf.nn.relu)
+        fc1 = tf.layers.dense(flat, 1024, tf.nn.relu)
+        fc2 = tf.layers.dense(fc1, 256, tf.nn.sigmoid)
 
         self.predictions = tf.layers.dense(fc2, num_actions)
 
@@ -227,7 +217,7 @@ class CNN():
 
 
 class CNNTargetNetwork(CNN):
-    def __init__(self, state_dim, num_actions, history_length=3, hidden=256, lr=1e-3, tau=0.01):
+    def __init__(self, state_dim, num_actions, history_length=3, hidden=256, lr=0.002, tau=0.01):
         super(CNNTargetNetwork, self).__init__(state_dim, num_actions, history_length, hidden, lr)
         self.tau = tau
         self._associate = self._register_associate()

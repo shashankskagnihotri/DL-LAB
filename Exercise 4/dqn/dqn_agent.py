@@ -79,7 +79,7 @@ class DQNAgent:
             # You can sample the agents actions with different probabilities (need to sum up to 1) so that the agent will prefer to accelerate or going straight.
             # To see how the agent explores, turn the rendering in the training on and look what the agent is doing.
             # action_id = ...
-            action_probability = np.array([1, 2, 2, 10 ,1])
+            action_probability = np.array([1, 2, 2, 20 ,1])
             action_probability = action_probability / np.sum(action_probability)
             action_id = np.random.choice(self.num_actions, p=action_probability)
             

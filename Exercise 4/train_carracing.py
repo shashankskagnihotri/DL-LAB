@@ -149,8 +149,8 @@ if __name__ == "__main__":
     state_dim = (96, 96)
 
     
-    Q = CNN(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
-    Q_target = CNNTargetNetwork(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
+    Q = CNN(state_dim, num_actions, history_length, hidden=256, lr=0.002)
+    Q_target = CNNTargetNetwork(state_dim, num_actions, history_length, hidden=256, lr=0.002)
     agent = DQNAgent(Q, Q_target, num_actions, discount_factor=0.99, batch_size=64, epsilon=0.05)
     
     train_online(env, agent, num_episodes=700, skip_frames = skip_frames, max_timesteps = max_timesteps, history_length = history_length, model_dir="./models_carracing")

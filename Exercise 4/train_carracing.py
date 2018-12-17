@@ -12,7 +12,7 @@ import itertools as it
 from utils import *
 import argparse
 
-def run_episode(env, agent, deterministic, skip_frames=0,  do_training=True, rendering=True, max_timesteps=1000, history_length=0):
+def run_episode(env, agent, deterministic, skip_frames=0,  do_training=True, rendering=False, max_timesteps=1000, history_length=0):
     """
     This methods runs one episode for a gym environment. 
     deterministic == True => agent executes only greedy actions according the Q function approximator (no random actions).
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         help='Number of frames to skip', type=int)
 
     cmdline_parser.add_argument(
-        '-m', '--max_timesteps', default=300,
+        '-m', '--max_timesteps', default=400,
         help='Number of frames to skip', type=int)
     
     args, unknowns = cmdline_parser.parse_known_args()
@@ -153,5 +153,5 @@ if __name__ == "__main__":
     Q_target = CNNTargetNetwork(state_dim, num_actions, history_length, hidden=256, lr=0.002)
     agent = DQNAgent(Q, Q_target, num_actions, discount_factor=0.99, batch_size=64, epsilon=0.05)
     
-    train_online(env, agent, num_episodes=700, skip_frames = skip_frames, max_timesteps = max_timesteps, history_length = history_length, model_dir="./models_carracing")
+    train_online(env, agent, num_episodes=900, skip_frames = skip_frames, max_timesteps = max_timesteps, history_length = history_length, model_dir="./models_carracing")
 

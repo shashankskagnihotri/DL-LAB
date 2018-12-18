@@ -109,18 +109,20 @@ class CNN():
 
 
         # first layer
-        conv1_w = tf.Variable(tf.truncated_normal(shape=[8, 8, history_length +1 , 16], mean=0, stddev=0.1), name="w1")
-        conv1_b = tf.Variable(tf.zeros(16), name="b1")
+        conv1_w = tf.Variable(tf.truncated_normal(shape=[8, 8, history_length +1 , 96], mean=0, stddev=0.1), name="w1")
+        conv1_b = tf.Variable(tf.zeros(96), name="b1")
         conv1 = tf.nn.conv2d(self.states_, conv1_w, strides=[1, 1, 1, 1], padding='SAME') + conv1_b
         conv1 = tf.nn.relu(conv1)
         pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
         # second layer
-        conv2_w = tf.Variable(tf.truncated_normal(shape=[4, 4, 16, 32], mean=0, stddev=0.1), name="w2")
-        conv2_b = tf.Variable(tf.zeros(32), name="b2")
+        conv2_w = tf.Variable(tf.truncated_normal(shape=[4, 4, 96, 16], mean=0, stddev=0.1), name="w2")
+        conv2_b = tf.Variable(tf.zeros(16), name="b2")
         conv2 = tf.nn.conv2d(pool1, conv2_w, strides=[1, 1, 1, 1], padding='SAME') + conv2_b
         conv2 = tf.nn.sigmoid(conv2)
         pool2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+        """
 
         # third layer
         conv3_w = tf.Variable(tf.truncated_normal(shape=[3, 3, 32, 16], mean=0, stddev=0.1), name="w3")
@@ -129,14 +131,16 @@ class CNN():
         conv3 = tf.nn.relu(conv3)
         pool3 = tf.nn.max_pool(conv3, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
+        """
+
         # flatten
-        shape = pool3.get_shape().as_list()
+        shape = pool2.get_shape().as_list()
         dim = np.prod(shape[1:])
-        flat = tf.reshape(pool3, [-1, dim])
+        flat = tf.reshape(pool2, [-1, dim])
 
         # network
-        fc1 = tf.layers.dense(flat, 1024, tf.nn.relu)
-        fc2 = tf.layers.dense(fc1, 256, tf.nn.sigmoid)
+        fc1 = tf.layers.dense(flat, 64, tf.nn.relu)
+        fc2 = tf.layers.dense(fc1, 16, tf.nn.sigmoid)
 
         self.predictions = tf.layers.dense(fc2, num_actions)
 

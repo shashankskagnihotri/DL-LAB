@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import gym
 from dqn.agent import DQNAgent
-from train_carracingimport run_episode
+from train_carracing import run_episode
 from dqn.networks import *
 import numpy as np
 import argparse
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     Q = CNN(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
     Q_target = CNNTargetNetwork(state_dim, num_actions, history_length, hidden=256, lr=1e-3)
     agent = DQNAgent(Q, Q_target, num_actions, discount_factor=0.99, batch_size=64, epsilon=0.05)
-    agent.load("./models_carracing/dqn_agent.ckpt"
+    agent.load("./models_carracing/dqn_agent.ckpt")
 
     
 

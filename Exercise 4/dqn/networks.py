@@ -109,14 +109,14 @@ class CNN():
 
 
         # first layer
-        conv1_w = tf.Variable(tf.truncated_normal(shape=[8, 8, history_length +1 , 256], mean=0, stddev=0.1), name="w1")
-        conv1_b = tf.Variable(tf.zeros(256), name="b1")
+        conv1_w = tf.Variable(tf.truncated_normal(shape=[8, 8, history_length +1 , 64], mean=0, stddev=0.1), name="w1")
+        conv1_b = tf.Variable(tf.zeros(64), name="b1")
         conv1 = tf.nn.conv2d(self.states_, conv1_w, strides=[1, 1, 1, 1], padding='SAME') + conv1_b
         conv1 = tf.nn.relu(conv1)
         pool1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
         # second layer
-        conv2_w = tf.Variable(tf.truncated_normal(shape=[4, 4, 256, 128], mean=0, stddev=0.1), name="w2")
+        conv2_w = tf.Variable(tf.truncated_normal(shape=[4, 4, 64, 128], mean=0, stddev=0.1), name="w2")
         conv2_b = tf.Variable(tf.zeros(128), name="b2")
         conv2 = tf.nn.conv2d(pool1, conv2_w, strides=[1, 1, 1, 1], padding='SAME') + conv2_b
         conv2 = tf.nn.sigmoid(conv2)
